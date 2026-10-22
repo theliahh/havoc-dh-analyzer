@@ -14,6 +14,7 @@ Points from the current guides that affect the rules:
 - Throw Glaive "is not used actively, because Screaming Brutality spends charges automatically" (M). This is why the log shows talent-triggered Throw Glaive casts (S7). Method's Fel-Scarred single-target list still ends with "Throw Glaive, if nothing else is available".
 - Exergy is still taken over Inertia (M), triggered by Vengeful Retreat and The Hunt. No top log in our sample had Inertia.
 - Method's M+ Aldrachi Reaver list says "Metamorphosis, if Eye Beam is on cooldown", which matches S2.
+- The Wowhead author's video guide for Aldrachi Reaver (V) adds detail Method doesn't have: hold Reaver's Glaive for add waves or cleave, spend the glaive before pressing The Hunt (The Hunt gives a new one), the spender order after a glaive depends on target count, and Thrill of the Fight is now a 30 s window that "you shouldn't even track". These are folded into S5 and AR1 to AR4 below.
 - Wowhead still recommends Fel-Scarred for M+ and Aldrachi Reaver for raid. Top-100 logs are about 83% Aldrachi Reaver in both, so the analyzer doesn't judge the tree choice. It detects which tree was played and applies that tree's rules.
 - Season 2 Fury changes (W): on-demand Fury was cut in favour of more Fury from auto attacks (Demon Blades buffed, Burning Hatred nerfed). No rule threshold changes, since the Fury checks use top-player numbers from this season.
 
@@ -78,6 +79,7 @@ The analyzer reads the live numbers from `wcl/data/benchmarks.json`; this table 
 | T | Top-player logs via Warcraft Logs (`docs/wcl-findings.md`) | 12.1.5, pulled 2026-10-22 | 32 logs, best per encounter, The Venomous Abyss Mythic and M+ Season 2. |
 | U | The user's own raid and M+ logs (October 2026) | 12.1.5 | Where log quirks (auto Throw Glaive, Demonic Meta buff) were found. |
 | I | [Icy Veins: Rotation and Cooldowns](https://www.icy-veins.com/wow/havoc-demon-hunter-pve-dps-rotation-cooldowns-abilities) | 12.0 pre-patch | **Outdated.** Used only where M or W agree. |
+| V | [Shadarek: Quick Guide to Aldrachi Reaver (YouTube)](https://www.youtube.com/watch?v=gUa2OZ2awWE) | Midnight, after a recent ~9% AR buff (patch not named) | By the Wowhead Havoc author. Read from a transcript; sims, stat sheets and Reaver's Mark stacks shown on screen weren't checked. |
 | X | [Maxroll](https://maxroll.gg/wow/class-guides/havoc-demon-hunter-raid-guide), [Archon](https://www.archon.gg/wow/builds/havoc/demon-hunter/raid/overview/mythic/all-bosses) | 11.1 / 11.1.5 | **Outdated.** Background only. |
 
 ## Shared rules (both hero trees)
@@ -88,7 +90,7 @@ The analyzer reads the live numbers from `wcl/data/benchmarks.json`; this table 
 | S2 | Don't cast Metamorphosis while Eye Beam is ready or has under 10 s left. Eye Beam goes first. | Meta cast with no Eye Beam in the 10 s before. | High | M, T |
 | S3 | Cast Essence Break on cooldown (12.1 tier set), even outside demon form. Don't hold it for Eye Beam. | Essence Break casts/min vs. top players. | Med | M, W, T |
 | S4 | Use Vengeful Retreat on cooldown (Exergy, Initiative). Guides say to pair it with Eye Beam, but only 26 to 47% of top players' Retreats land within 2 s of one, so pairing isn't checked. | VR casts/min vs. top players. | Med | M, W, T |
-| S5 | Cast The Hunt on cooldown (AR: when Reaver's Glaive isn't available). | The Hunt 370965 casts/min vs. top players. | Med | M, T |
+| S5 | Cast The Hunt on cooldown (AR: when Reaver's Glaive isn't available, so throw the glaive first, since The Hunt gives a new one; that glaive is worth more than holding The Hunt for Eye Beam). | The Hunt 370965 casts/min vs. top players. | Med | M, V, T |
 | S6 | Don't sit at 2 Immolation Aura charges. | Proxy: Immolation Aura casts/min vs. top players. | Med | M, T |
 | S7 | Don't press Throw Glaive. Exception: out of range or nothing else to press. Talent-triggered throws don't count (see above). Top AR players throw manually almost never; top FS players in M+ throw 0.8 to 3 a minute, so for Fel-Scarred in M+ treat a warning here as minor. | Pressed 185123 casts/min, warn at 0.5. | Low | M, T, U |
 | S8 | Keep Blade Dance / Death Sweep on cooldown, and keep enough Fury to cast it. | BD + DS casts/min vs. top players. | Med | M, W, T |
@@ -102,10 +104,10 @@ The analyzer reads the live numbers from `wcl/data/benchmarks.json`; this table 
 
 | ID | Rule | Detection | Sev | Src |
 |---|---|---|---|---|
-| AR1 | Use Reaver's Glaive as soon as it's available, on the priority target. | 442294 casts/min vs. top players (5.1 raid, 4.5 M+). | High | M, T |
-| AR2 | After Reaver's Glaive, use the right spender order to get both empowerments (Rending Strike and Glaive Flurry). | Thrill of the Fight applied before the next Glaive. | High | M, W |
-| AR3 | M+: Blade Dance when buffed by Glaive Flurry but not Rending Strike. Chaos Strike / Annihilation when buffed by both. | *Not implemented.* Buff state at each spender cast. | Med | M |
-| AR4 | Keep Thrill of the Fight up. | Uptime vs. top players (78% raid, 70% M+). | Med | T |
+| AR1 | Use Reaver's Glaive as soon as it's available, on the priority target. Exception: hold it briefly for an add wave or cleave, where Fury of the Illidari hits more targets. | 442294 casts/min vs. top players (5.1 raid, 4.5 M+). Holding for adds lowers the rate a little, which the benchmark already includes. | High | M, V, T |
+| AR2 | After Reaver's Glaive, use the right spender order to get both empowerments (Rending Strike and Glaive Flurry). | Thrill of the Fight applied before the next Glaive. | High | M, W, V |
+| AR3 | Spender order after Reaver's Glaive depends on target count. Single target: Blade Dance first, then Chaos Strike, to build Reaver's Mark to 3 stacks (once the target has 2 or more stacks, Chaos Strike first). Two or more targets: always Chaos Strike first, then Blade Dance. Method's M+ list says the same in buff terms (Blade Dance with Glaive Flurry only, Chaos Strike / Annihilation with both). | *Not implemented.* Buff state, Reaver's Mark stacks and target count at each spender cast. | Med | M, V |
+| AR4 | Keep Thrill of the Fight up. It's now a 30 s window (8% haste), and V says it's not worth tracking in play; low uptime mostly means glaives or empowered spenders were missed (AR1, AR2). | Uptime vs. top players (78% raid, 70% M+). | Med | T, V |
 | AR5 | Opener follows Method's AR opener (Immolation Aura pre-pull, The Hunt, pot + trinket, Reaver's Glaive, Eye Beam, Essence Break, ...). | First 20 s of casts vs. the template (raid). | Low | M |
 
 ## Fel-Scarred rules
@@ -132,3 +134,4 @@ The analyzer reads the live numbers from `wcl/data/benchmarks.json`; this table 
 5. **Trinkets** aren't checked in S13.
 6. **Benchmark sample** is 8 logs per group. Rerun `wcl/benchmarks.py 20` for tighter numbers, and refresh `wcl/hero_tree.py` talent IDs after a talent patch.
 7. **12.1.7**: recheck M and W when it goes live.
+8. **AR4 may be redundant** with AR2 if Thrill of the Fight is a 30 s window (V). Consider lowering it to Low or folding it into AR2 once the code changes.
