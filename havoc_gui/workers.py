@@ -9,6 +9,8 @@ from havoc_analyzer import benchmarks
 from havoc_analyzer.combatlog import find_havoc_players, parse
 from havoc_analyzer.report import FightResult, analyze_fights
 
+NO_HAVOC = "No Havoc Demon Hunter found in this log. Is Advanced Combat Logging on?"
+
 
 @dataclass
 class LoadedLog:
@@ -35,7 +37,7 @@ class LogWorker(QObject):
             self.progress.emit(0, "Finding Havoc Demon Hunters…")
             havocs = find_havoc_players(self.path, lambda f: self.progress.emit(int(f * 30), "Finding Havoc Demon Hunters…"))
             if not havocs:
-                raise ValueError("No Havoc Demon Hunter found in this log. Is Advanced Combat Logging on?")
+                raise ValueError(NO_HAVOC)
             guid = self.player_guid if self.player_guid in havocs else next(iter(havocs))
             log = parse(self.path, guid, lambda f: self.progress.emit(30 + int(f * 65), "Reading fights…"))
             self.progress.emit(97, "Checking rules…")
