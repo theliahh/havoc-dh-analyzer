@@ -242,7 +242,8 @@ RULES = [
          "Use Vengeful Retreat whenever it's ready. With Exergy and Initiative it's a damage buff, not just "
          "a movement button. Guides pair it with Eye Beam, but that isn't checked."),
     Rule("S5", "The Hunt on cooldown", "Med", BOTH, _rate_check(["The Hunt"], "The Hunt"),
-         "Use The Hunt whenever it's ready. As Aldrachi Reaver, throw Reaver's Glaive first if both are ready."),
+         "Use The Hunt whenever it's ready. As Aldrachi Reaver, throw Reaver's Glaive first if both are ready, "
+         "because The Hunt gives you a new one."),
     Rule("S6", "Immolation Aura charges used", "Med", BOTH, _rate_check(["Immolation Aura"], "Immolation Aura"),
          "Immolation Aura has two charges. Don't let both sit full, or the recharge time is wasted."),
     Rule("S7", "No manual Throw Glaive", "Low", BOTH, _manual_throws,
@@ -268,13 +269,14 @@ RULES = [
          f"Drink your damage potion in the opener or with Metamorphosis (up to {PREPOT_S:.0f} s before it "
          "is fine), so it boosts your biggest damage."),
     Rule("AR1", "Reaver's Glaive on time", "High", AR, _rate_check(["Reaver's Glaive"], "Reaver's Glaive"),
-         "Throw Reaver's Glaive as soon as it's available, at the main target."),
+         "Throw Reaver's Glaive as soon as it's available, at the main target. The exception is holding it a "
+         "few seconds for an add wave you want to cleave."),
     Rule("AR2", "Both empowered spenders after each Glaive", "High", AR, _thrill_per_glaive,
          "After each Reaver's Glaive, use both empowered attacks (Rending Strike and Glaive Flurry) before "
          "the next Glaive. Doing both gives you Thrill of the Fight."),
     Rule("AR4", "Thrill of the Fight uptime", "Med", AR, _thrill_uptime,
-         "Keep the Thrill of the Fight buff up as much as you can. Top players have it about 78% of a raid "
-         "fight and 70% of a key."),
+         "Thrill of the Fight is a 30 s window you get from doing both empowered attacks. Don't watch it while "
+         "playing: if AR2 is clean, this follows. Top players have it about 78% of a raid fight and 70% of a key."),
     Rule("AR5", "Opener", "Low", AR, _opener,
          "Start the pull with Method's Aldrachi Reaver opener: The Hunt, Reaver's Glaive, Eye Beam, "
          "Essence Break, spenders, then Metamorphosis. Checked on raid bosses only."),
@@ -294,9 +296,9 @@ NOT_CHECKED = [
          "Keep spending Fury while Metamorphosis is up. Spending extends it (Shattered Destiny)."),
     Rule("S12", "Fel Rush only as filler", "Low", BOTH, None,
          "Use Fel Rush only when nothing else is ready or to get back to the target."),
-    Rule("AR3", "Right spender for the Glaive buffs (M+)", "Med", AR, None,
-         "In Mythic+, use Blade Dance when only Glaive Flurry is up, and Chaos Strike or Annihilation "
-         "when both buffs are up."),
+    Rule("AR3", "Right spender order after a Glaive", "Med", AR, None,
+         "On one target, alternate Blade Dance and Chaos Strike to build Reaver's Mark to 3 stacks, and use "
+         "Chaos Strike first once you have 2 or more. With 2 or more targets, always Chaos Strike first."),
     Rule("FS1", "Immolation Aura before Metamorphosis", "Med", FS, None,
          "Spend your Immolation Aura charges before you press Metamorphosis."),
 ]
