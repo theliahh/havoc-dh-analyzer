@@ -1,10 +1,50 @@
 # Havoc report: Theliahh-Mal'Ganis-US
 
-Game build 12.1.5. 10 fights.
+Game build 12.1.5. 10 fights. 🔴 likely DPS lost · 🟡 worth a look · 🟢 fine · ⚪ measured, no benchmark.
 
-## Nek'zali the Soulcoiler (Heroic) - Kill, 3:20
+## Overview
+
+Across 10 fights:
+
+| Rule | 🔴 Flagged | 🟡 Warned |
+|---|---|---|
+| S9a Enough Fury for Metamorphosis | 3 | 0 |
+| S2 Eye Beam before Metamorphosis | 2 | 0 |
+| S9b Enough Fury for Essence Break | 1 | 8 |
+| S11 Avoid dead time | 1 | 6 |
+| AR4 Thrill of the Fight uptime | 0 | 4 |
+| S5 The Hunt on cooldown | 0 | 3 |
+| S13 Potion with burst | 0 | 2 |
+| S4 Vengeful Retreat on cooldown | 0 | 1 |
+| S8 Blade Dance / Death Sweep on cooldown | 0 | 1 |
+| S1 Eye Beam on cooldown | 0 | 1 |
+
+## Nek'zali the Soulcoiler (Heroic): Kill, 3:20
 
 Hero tree: **Aldrachi Reaver** · DPS: **218,028** · Pressed abilities per minute: **59.8**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🟡 | S11 Avoid dead time (High) | 6 s idle over 2 gaps (1.9 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. | 2:16, 2:23 |
+| 🟡 | S9b Enough Fury for Essence Break (Med) | 2 of 6 Essence Break casts started under 80 Fury (lowest 61). Average 89 (top players: 100). | 0:05, 0:38 |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 4.78/min vs 9.25/min for top players (52%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 2.99/min vs 3.00/min for top players (99%). |  |
+| 🟢 | S2 Eye Beam before Metamorphosis (High) | All 2 Metamorphosis casts came within 10 s after an Eye Beam. |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 100% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (0 missed). |  |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.79/min vs 1.81/min for top players (99%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.39/min vs 2.31/min for top players (104%). |  |
+| 🟢 | S5 The Hunt on cooldown (Med) | The Hunt: 2.39/min vs 2.01/min for top players (119%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 1.79/min vs 1.45/min for top players (124%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 11.96/min vs 10.50/min for top players (114%). |  |
+| 🟢 | S9a Enough Fury for Metamorphosis (Med) | Average 106 Fury at Metamorphosis (top players: 111); none under 90. |  |
+| 🟢 | S13 Potion with burst (Med) | 1 damage potion(s), all in the opener or a Metamorphosis. |  |
+| 🟢 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 81% of the fight. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: The Hunt, Reaver's Glaive, Eye Beam, Essence Break, Death Sweep, Annihilation, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Felblade, Fel Rush, Death Sweep. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -24,7 +64,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **218,028** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 65% |
+| Metamorphosis (incl. Demonic) | 65% |
 | Immolation Aura | 30% |
 | Thrill of the Fight | 81% |
 | Initiative | 39% |
@@ -32,13 +72,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **218,028** · Pressed abilities per minu
 | Furious Gaze | 37% |
 
 Top damage: Death Sweep 15%, Annihilation 9%, Wounded Quarry 9%, Soulscar 9%, Perfected Guillotine 8%, Essence Break 6%, Font of Venomous Rage 6%, Melee 6%
-Fury at Metamorphosis casts: [120, 91]
-Average Fury at Essence Break: 89
-Idle gaps over 2.5 s: 3 (9 s, not yet adjusted for forced downtime)
 
-## Entombed Sentinels (Heroic) - Wipe, 3:28
+</details>
+
+## Entombed Sentinels (Heroic): Wipe, 3:28
 
 Hero tree: **Aldrachi Reaver** · DPS: **189,304** · Pressed abilities per minute: **57.6**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🔴 | S2 Eye Beam before Metamorphosis (High) | 1 of 2 Metamorphosis casts had no Eye Beam in the 10 s before, so Eye Beam was likely ready or nearly ready and the reset was wasted. | 2:48 |
+| 🔴 | S9b Enough Fury for Essence Break (Med) | 4 of 6 Essence Break casts started under 80 Fury (lowest 56). Average 82 (top players: 100). | 0:05, 0:38, 1:53, 3:11 |
+| 🟡 | S11 Avoid dead time (High) | 8 s idle over 2 gaps (2.2 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. | 0:46, 2:23 |
+| 🟡 | S5 The Hunt on cooldown (Med) | The Hunt: 1.73/min vs 2.01/min for top players (86%). |  |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 4.90/min vs 9.25/min for top players (53%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 2.88/min vs 3.00/min for top players (96%). |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 100% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (0 missed). |  |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.73/min vs 1.81/min for top players (96%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.59/min vs 2.31/min for top players (112%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 1.73/min vs 1.45/min for top players (119%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 11.24/min vs 10.50/min for top players (107%). |  |
+| 🟢 | S9a Enough Fury for Metamorphosis (Med) | Average 120 Fury at Metamorphosis (top players: 111); none under 90. |  |
+| 🟢 | S13 Potion with burst (Med) | 1 damage potion(s), all in the opener or a Metamorphosis. |  |
+| 🟢 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 85% of the fight. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: The Hunt, Reaver's Glaive, Fel Rush, Eye Beam, Essence Break, Death Sweep, Annihilation, Felblade, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -58,7 +120,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **189,304** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 64% |
+| Metamorphosis (incl. Demonic) | 64% |
 | Immolation Aura | 25% |
 | Thrill of the Fight | 85% |
 | Initiative | 34% |
@@ -66,13 +128,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **189,304** · Pressed abilities per minu
 | Furious Gaze | 37% |
 
 Top damage: Soulscar 13%, Death Sweep 12%, Wounded Quarry 10%, Annihilation 10%, Perfected Guillotine 7%, Essence Break 6%, Melee 6%, Font of Venomous Rage 5%
-Fury at Metamorphosis casts: [120, 120]
-Average Fury at Essence Break: 82
-Idle gaps over 2.5 s: 4 (13 s, not yet adjusted for forced downtime)
 
-## Entombed Sentinels (Heroic) - Kill, 3:14
+</details>
+
+## Entombed Sentinels (Heroic): Kill, 3:14
 
 Hero tree: **Aldrachi Reaver** · DPS: **224,045** · Pressed abilities per minute: **59.1**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🔴 | S9a Enough Fury for Metamorphosis (Med) | 1 of 2 Metamorphosis casts started under 90 Fury (lowest 69). Average 94 (top players: 111). | 0:11 |
+| 🟡 | S11 Avoid dead time (High) | 6 s idle over 2 gaps (1.8 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. | 0:45, 2:26 |
+| 🟡 | S9b Enough Fury for Essence Break (Med) | 1 of 6 Essence Break casts started under 80 Fury (lowest 59). Average 97 (top players: 100). | 0:06 |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 5.85/min vs 9.25/min for top players (63%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 3.08/min vs 3.00/min for top players (103%). |  |
+| 🟢 | S2 Eye Beam before Metamorphosis (High) | All 2 Metamorphosis casts came within 10 s after an Eye Beam. |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 100% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (0 missed). |  |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.85/min vs 1.81/min for top players (102%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.46/min vs 2.31/min for top players (107%). |  |
+| 🟢 | S5 The Hunt on cooldown (Med) | The Hunt: 2.46/min vs 2.01/min for top players (122%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 2.16/min vs 1.45/min for top players (149%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 11.09/min vs 10.50/min for top players (106%). |  |
+| 🟢 | S13 Potion with burst (Med) | 1 damage potion(s), all in the opener or a Metamorphosis. |  |
+| 🟢 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 80% of the fight. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: The Hunt, Reaver's Glaive, Eye Beam, Essence Break, Death Sweep, Annihilation, Felblade, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep, Death Sweep. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -92,7 +176,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **224,045** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 61% |
+| Metamorphosis (incl. Demonic) | 61% |
 | Immolation Aura | 36% |
 | Thrill of the Fight | 80% |
 | Initiative | 34% |
@@ -100,13 +184,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **224,045** · Pressed abilities per minu
 | Furious Gaze | 37% |
 
 Top damage: Death Sweep 12%, Soulscar 11%, Wounded Quarry 9%, Annihilation 8%, Perfected Guillotine 8%, Font of Venomous Rage 7%, Essence Break 6%, Eye Beam 6%
-Fury at Metamorphosis casts: [69, 120]
-Average Fury at Essence Break: 97
-Idle gaps over 2.5 s: 3 (10 s, not yet adjusted for forced downtime)
 
-## Vashnik the Malignant (Heroic) - Kill, 3:17
+</details>
+
+## Vashnik the Malignant (Heroic): Kill, 3:17
 
 Hero tree: **Aldrachi Reaver** · DPS: **249,773** · Pressed abilities per minute: **63.0**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🟡 | S9b Enough Fury for Essence Break (Med) | 1 of 6 Essence Break casts started under 80 Fury (lowest 50). Average 92 (top players: 100). | 2:52 |
+| 🟡 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 75% of the fight. |  |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 9.09/min vs 9.25/min for top players (98%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 3.03/min vs 3.00/min for top players (101%). |  |
+| 🟢 | S2 Eye Beam before Metamorphosis (High) | All 2 Metamorphosis casts came within 10 s after an Eye Beam. |  |
+| 🟢 | S11 Avoid dead time (High) | 0 s idle over 0 gaps (0.0 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 94% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (1 missed). | 3:15 |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.82/min vs 1.81/min for top players (101%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.42/min vs 2.31/min for top players (105%). |  |
+| 🟢 | S5 The Hunt on cooldown (Med) | The Hunt: 2.42/min vs 2.01/min for top players (120%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 2.12/min vs 1.45/min for top players (146%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 12.12/min vs 10.50/min for top players (115%). |  |
+| 🟢 | S9a Enough Fury for Metamorphosis (Med) | Average 118 Fury at Metamorphosis (top players: 111); none under 90. |  |
+| 🟢 | S13 Potion with burst (Med) | 1 damage potion(s), all in the opener or a Metamorphosis. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: Immolation Aura, The Hunt, Reaver's Glaive, Eye Beam, Fel Rush, Essence Break, Death Sweep, Annihilation, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -126,7 +232,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **249,773** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 71% |
+| Metamorphosis (incl. Demonic) | 71% |
 | Immolation Aura | 35% |
 | Thrill of the Fight | 75% |
 | Initiative | 18% |
@@ -134,13 +240,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **249,773** · Pressed abilities per minu
 | Furious Gaze | 39% |
 
 Top damage: Death Sweep 14%, Wounded Quarry 14%, Soulscar 11%, Annihilation 10%, Essence Break 6%, Font of Venomous Rage 5%, Melee 5%, Reaver's Glaive 5%
-Fury at Metamorphosis casts: [116, 120]
-Average Fury at Essence Break: 92
-Idle gaps over 2.5 s: 1 (2 s, not yet adjusted for forced downtime)
 
-## The Lost Explorers (Heroic) - Kill, 2:40
+</details>
+
+## The Lost Explorers (Heroic): Kill, 2:40
 
 Hero tree: **Aldrachi Reaver** · DPS: **279,030** · Pressed abilities per minute: **55.8**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🔴 | S9a Enough Fury for Metamorphosis (Med) | 1 of 2 Metamorphosis casts started under 90 Fury (lowest 63). Average 92 (top players: 111). | 0:10 |
+| 🟡 | S11 Avoid dead time (High) | 8 s idle over 3 gaps (3.0 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. | 0:52, 1:06, 1:09 |
+| 🟡 | S9b Enough Fury for Essence Break (Med) | 2 of 5 Essence Break casts started under 80 Fury (lowest 56). Average 82 (top players: 100). | 0:06, 1:52 |
+| 🟡 | S13 Potion with burst (Med) | 1 damage potion(s) used outside the opener and Metamorphosis. | 2:24 |
+| 🟡 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 72% of the fight. |  |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 4.49/min vs 9.25/min for top players (49%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 2.99/min vs 3.00/min for top players (100%). |  |
+| 🟢 | S2 Eye Beam before Metamorphosis (High) | All 2 Metamorphosis casts came within 10 s after an Eye Beam. |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 100% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (0 missed). |  |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.87/min vs 1.81/min for top players (104%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.25/min vs 2.31/min for top players (97%). |  |
+| 🟢 | S5 The Hunt on cooldown (Med) | The Hunt: 2.25/min vs 2.01/min for top players (111%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 1.87/min vs 1.45/min for top players (129%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 11.23/min vs 10.50/min for top players (107%). |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: The Hunt, Reaver's Glaive, Eye Beam, Essence Break, Death Sweep, Annihilation, Felblade, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep, Death Sweep. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -160,7 +288,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **279,030** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 58% |
+| Metamorphosis (incl. Demonic) | 58% |
 | Immolation Aura | 31% |
 | Thrill of the Fight | 72% |
 | Initiative | 30% |
@@ -168,13 +296,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **279,030** · Pressed abilities per minu
 | Furious Gaze | 38% |
 
 Top damage: Soulscar 12%, Death Sweep 12%, Wounded Quarry 10%, Perfected Guillotine 9%, Essence Break 9%, Font of Venomous Rage 7%, Eye Beam 6%, Annihilation 5%
-Fury at Metamorphosis casts: [63, 120]
-Average Fury at Essence Break: 82
-Idle gaps over 2.5 s: 3 (13 s, not yet adjusted for forced downtime)
 
-## Sszorak (Heroic) - Kill, 3:24
+</details>
+
+## Sszorak (Heroic): Kill, 3:24
 
 Hero tree: **Aldrachi Reaver** · DPS: **234,356** · Pressed abilities per minute: **61.0**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🟡 | S9b Enough Fury for Essence Break (Med) | 2 of 6 Essence Break casts started under 80 Fury (lowest 54). Average 97 (top players: 100). | 0:06, 2:58 |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 7.33/min vs 9.25/min for top players (79%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 2.93/min vs 3.00/min for top players (98%). |  |
+| 🟢 | S2 Eye Beam before Metamorphosis (High) | All 2 Metamorphosis casts came within 10 s after an Eye Beam. |  |
+| 🟢 | S11 Avoid dead time (High) | 0 s idle over 0 gaps (0.0 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 95% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (1 missed). | 3:22 |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.76/min vs 1.81/min for top players (97%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.35/min vs 2.31/min for top players (102%). |  |
+| 🟢 | S5 The Hunt on cooldown (Med) | The Hunt: 2.35/min vs 2.01/min for top players (116%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 1.76/min vs 1.45/min for top players (121%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 12.02/min vs 10.50/min for top players (114%). |  |
+| 🟢 | S9a Enough Fury for Metamorphosis (Med) | Average 120 Fury at Metamorphosis (top players: 111); none under 90. |  |
+| 🟢 | S13 Potion with burst (Med) | 1 damage potion(s), all in the opener or a Metamorphosis. |  |
+| 🟢 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 80% of the fight. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: The Hunt, Reaver's Glaive, Eye Beam, Essence Break, Death Sweep, Annihilation, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep, Death Sweep, Felblade. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -193,7 +343,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **234,356** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 67% |
+| Metamorphosis (incl. Demonic) | 67% |
 | Immolation Aura | 29% |
 | Thrill of the Fight | 80% |
 | Initiative | 12% |
@@ -201,13 +351,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **234,356** · Pressed abilities per minu
 | Furious Gaze | 38% |
 
 Top damage: Death Sweep 14%, Soulscar 11%, Wounded Quarry 10%, Annihilation 10%, Essence Break 7%, Font of Venomous Rage 6%, Melee 6%, Reaver's Glaive 4%
-Fury at Metamorphosis casts: [120, 120]
-Average Fury at Essence Break: 97
-Idle gaps over 2.5 s: 1 (2 s, not yet adjusted for forced downtime)
 
-## The Twin Fangs (Heroic) - Kill, 4:33
+</details>
+
+## The Twin Fangs (Heroic): Kill, 4:33
 
 Hero tree: **Aldrachi Reaver** · DPS: **296,022** · Pressed abilities per minute: **58.3**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🟡 | S11 Avoid dead time (High) | 10 s idle over 4 gaps (2.2 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. | 2:03, 2:26, 2:57, 4:23 |
+| 🟡 | S5 The Hunt on cooldown (Med) | The Hunt: 1.75/min vs 2.01/min for top players (87%). |  |
+| 🟡 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 69% of the fight. |  |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 7.46/min vs 9.25/min for top players (81%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 3.07/min vs 3.00/min for top players (102%). |  |
+| 🟢 | S2 Eye Beam before Metamorphosis (High) | All 2 Metamorphosis casts came within 10 s after an Eye Beam. |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 100% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (0 missed). |  |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.75/min vs 1.81/min for top players (97%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.41/min vs 2.31/min for top players (104%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 2.19/min vs 1.45/min for top players (151%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 11.19/min vs 10.50/min for top players (106%). |  |
+| 🟢 | S9a Enough Fury for Metamorphosis (Med) | Average 120 Fury at Metamorphosis (top players: 111); none under 90. |  |
+| 🟢 | S9b Enough Fury for Essence Break (Med) | Average 102 Fury at Essence Break (top players: 100); none under 80. |  |
+| 🟢 | S13 Potion with burst (Med) | 1 damage potion(s), all in the opener or a Metamorphosis. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: The Hunt, Reaver's Glaive, Felblade, Eye Beam, Essence Break, Death Sweep, Annihilation, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep, Death Sweep. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -227,7 +399,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **296,022** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 61% |
+| Metamorphosis (incl. Demonic) | 61% |
 | Immolation Aura | 37% |
 | Thrill of the Fight | 69% |
 | Initiative | 24% |
@@ -235,13 +407,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **296,022** · Pressed abilities per minu
 | Furious Gaze | 37% |
 
 Top damage: Soulscar 14%, Death Sweep 12%, Wounded Quarry 11%, Perfected Guillotine 8%, Essence Break 7%, Annihilation 6%, Eye Beam 5%, Font of Venomous Rage 5%
-Fury at Metamorphosis casts: [119, 120]
-Average Fury at Essence Break: 102
-Idle gaps over 2.5 s: 5 (17 s, not yet adjusted for forced downtime)
 
-## The Coiled Altar (Heroic) - Kill, 4:14
+</details>
+
+## The Coiled Altar (Heroic): Kill, 4:14
 
 Hero tree: **Aldrachi Reaver** · DPS: **250,388** · Pressed abilities per minute: **58.6**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🔴 | S2 Eye Beam before Metamorphosis (High) | 1 of 2 Metamorphosis casts had no Eye Beam in the 10 s before, so Eye Beam was likely ready or nearly ready and the reset was wasted. | 2:22 |
+| 🔴 | S9a Enough Fury for Metamorphosis (Med) | 1 of 2 Metamorphosis casts started under 90 Fury (lowest 65). Average 92 (top players: 111). | 0:12 |
+| 🟡 | S11 Avoid dead time (High) | 8 s idle over 2 gaps (1.9 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. | 1:07, 2:08 |
+| 🟡 | S9b Enough Fury for Essence Break (Med) | 1 of 8 Essence Break casts started under 80 Fury (lowest 60). Average 99 (top players: 100). | 0:07 |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 5.41/min vs 9.25/min for top players (59%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 3.06/min vs 3.00/min for top players (102%). |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 100% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (0 missed). |  |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.88/min vs 1.81/min for top players (104%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.59/min vs 2.31/min for top players (112%). |  |
+| 🟢 | S5 The Hunt on cooldown (Med) | The Hunt: 1.88/min vs 2.01/min for top players (93%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 1.88/min vs 1.45/min for top players (130%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 11.06/min vs 10.50/min for top players (105%). |  |
+| 🟢 | S13 Potion with burst (Med) | 1 damage potion(s), all in the opener or a Metamorphosis. |  |
+| 🟢 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 82% of the fight. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: Immolation Aura, The Hunt, Reaver's Glaive, Eye Beam, Essence Break, Death Sweep, Felblade, Annihilation, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -261,7 +455,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **250,388** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 62% |
+| Metamorphosis (incl. Demonic) | 62% |
 | Immolation Aura | 31% |
 | Thrill of the Fight | 82% |
 | Initiative | 26% |
@@ -269,13 +463,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **250,388** · Pressed abilities per minu
 | Furious Gaze | 38% |
 
 Top damage: Death Sweep 13%, Soulscar 11%, Wounded Quarry 10%, Annihilation 9%, Essence Break 7%, Perfected Guillotine 6%, Melee 5%, Eye Beam 5%
-Fury at Metamorphosis casts: [65, 120]
-Average Fury at Essence Break: 99
-Idle gaps over 2.5 s: 4 (16 s, not yet adjusted for forced downtime)
 
-## Ula'tek (Heroic) - Kill, 7:05
+</details>
+
+## Ula'tek (Heroic): Kill, 7:05
 
 Hero tree: **Aldrachi Reaver** · DPS: **235,881** · Pressed abilities per minute: **45.5**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🔴 | S11 Avoid dead time (High) | 68 s idle over 14 gaps (9.6 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. | 2:30, 2:37, 3:22, 4:54, 5:06, 5:38 |
+| 🟡 | S1 Eye Beam on cooldown (High) | Eye Beam: 2.54/min vs 3.00/min for top players (84%). |  |
+| 🟡 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 1.97/min vs 2.31/min for top players (85%). |  |
+| 🟡 | S5 The Hunt on cooldown (Med) | The Hunt: 1.69/min vs 2.01/min for top players (84%). |  |
+| 🟡 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 8.87/min vs 10.50/min for top players (84%). |  |
+| 🟡 | S9b Enough Fury for Essence Break (Med) | 1 of 12 Essence Break casts started under 80 Fury (lowest 62). Average 100 (top players: 100). | 6:24 |
+| 🟡 | S13 Potion with burst (Med) | 1 damage potion(s) used outside the opener and Metamorphosis. | 5:51 |
+| 🟡 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 78% of the fight. |  |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 5.07/min vs 9.25/min for top players (55%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S2 Eye Beam before Metamorphosis (High) | All 3 Metamorphosis casts came within 10 s after an Eye Beam. |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 95% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (1 missed). | 7:02 |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.69/min vs 1.81/min for top players (94%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 1.69/min vs 1.45/min for top players (117%). |  |
+| 🟢 | S9a Enough Fury for Metamorphosis (Med) | Average 108 Fury at Metamorphosis (top players: 111); none under 90. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: Immolation Aura, The Hunt, Reaver's Glaive, Eye Beam, Essence Break, Death Sweep, Annihilation, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep, Death Sweep. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -295,7 +511,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **235,881** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 52% |
+| Metamorphosis (incl. Demonic) | 52% |
 | Immolation Aura | 28% |
 | Thrill of the Fight | 78% |
 | Initiative | 45% |
@@ -303,13 +519,35 @@ Hero tree: **Aldrachi Reaver** · DPS: **235,881** · Pressed abilities per minu
 | Furious Gaze | 31% |
 
 Top damage: Death Sweep 12%, Font of Venomous Rage 10%, Wounded Quarry 9%, Soulscar 9%, Essence Break 8%, Annihilation 7%, Eye Beam 7%, Perfected Guillotine 7%
-Fury at Metamorphosis casts: [115, 90, 120]
-Average Fury at Essence Break: 100
-Idle gaps over 2.5 s: 18 (96 s, not yet adjusted for forced downtime)
 
-## Nymrissa Wavecaller (Heroic) - Kill, 3:07
+</details>
+
+## Nymrissa Wavecaller (Heroic): Kill, 3:07
 
 Hero tree: **Aldrachi Reaver** · DPS: **214,837** · Pressed abilities per minute: **62.4**
+
+### Findings (vs top 8 Aldrachi Reaver raid logs)
+
+| | Rule | Result | Look at |
+|---|---|---|---|
+| 🟡 | S9b Enough Fury for Essence Break (Med) | 2 of 6 Essence Break casts started under 80 Fury (lowest 40). Average 90 (top players: 100). | 0:06, 2:04 |
+| ⚪ | AR1 Reaver's Glaive on time (High) | Reaver's Glaive: 6.72/min vs 9.25/min for top players (73%). Benchmark not yet verified, so not judged. |  |
+| 🟢 | S1 Eye Beam on cooldown (High) | Eye Beam: 3.20/min vs 3.00/min for top players (107%). |  |
+| 🟢 | S2 Eye Beam before Metamorphosis (High) | All 2 Metamorphosis casts came within 10 s after an Eye Beam. |  |
+| 🟢 | S11 Avoid dead time (High) | 0 s idle over 0 gaps (0.0 s/min) vs 0.6 s/min for top players. Forced downtime is not excluded yet. |  |
+| 🟢 | AR2 Both empowered spenders after each Glaive (High) | 100% of Reaver's Glaive casts led to Thrill of the Fight before the next Glaive (0 missed). |  |
+| 🟢 | S3 Essence Break on cooldown (Med) | Essence Break: 1.92/min vs 1.81/min for top players (106%). |  |
+| 🟢 | S4 Vengeful Retreat on cooldown (Med) | Vengeful Retreat: 2.88/min vs 2.31/min for top players (125%). |  |
+| 🟢 | S5 The Hunt on cooldown (Med) | The Hunt: 1.92/min vs 2.01/min for top players (95%). |  |
+| 🟢 | S6 Immolation Aura charges used (Med) | Immolation Aura: 2.24/min vs 1.45/min for top players (155%). |  |
+| 🟢 | S8 Blade Dance / Death Sweep on cooldown (Med) | Blade Dance + Death Sweep: 12.16/min vs 10.50/min for top players (116%). |  |
+| 🟢 | S9a Enough Fury for Metamorphosis (Med) | Average 105 Fury at Metamorphosis (top players: 111); none under 90. |  |
+| 🟢 | S13 Potion with burst (Med) | 1 damage potion(s), all in the opener or a Metamorphosis. |  |
+| 🟢 | AR4 Thrill of the Fight uptime (Med) | Thrill of the Fight up 83% of the fight. |  |
+| 🟢 | S7 No manual Throw Glaive (Low) | No manual Throw Glaive casts. |  |
+| 🟢 | AR5 Opener (Low) | Opener matched 91% of the reference order. Yours: The Hunt, Reaver's Glaive, Eye Beam, Essence Break, Death Sweep, Annihilation, Death Sweep, Vengeful Retreat, Metamorphosis, Eye Beam, Death Sweep, Death Sweep, Felblade. |  |
+
+<details><summary>Casts, buffs and damage</summary>
 
 | Ability | Casts | Longest gap |
 |---|---|---|
@@ -329,7 +567,7 @@ Hero tree: **Aldrachi Reaver** · DPS: **214,837** · Pressed abilities per minu
 
 | Buff | Uptime |
 |---|---|
-| Metamorphosis | 73% |
+| Metamorphosis (incl. Demonic) | 73% |
 | Immolation Aura | 37% |
 | Thrill of the Fight | 83% |
 | Initiative | 34% |
@@ -337,6 +575,5 @@ Hero tree: **Aldrachi Reaver** · DPS: **214,837** · Pressed abilities per minu
 | Furious Gaze | 41% |
 
 Top damage: Death Sweep 14%, Annihilation 10%, Wounded Quarry 10%, Font of Venomous Rage 9%, Soulscar 9%, Essence Break 6%, Melee 5%, Eye Beam 5%
-Fury at Metamorphosis casts: [90, 120]
-Average Fury at Essence Break: 90
-Idle gaps over 2.5 s: 1 (2 s, not yet adjusted for forced downtime)
+
+</details>

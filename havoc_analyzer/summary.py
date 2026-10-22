@@ -1,17 +1,15 @@
-"""Per-fight Havoc summary built from parsed combat log events.
+"""Per-fight Havoc summary built from normalized events.
 
-This is the raw data layer the ruleset checks (step 3) will run on: casts,
-damage, buff uptimes, Fury at key casts, cooldown gaps and deaths.
+This is the data layer the ruleset checks run on: pressed casts, damage, buff
+uptimes, real Metamorphosis windows, Fury at key casts, idle time and deaths.
 """
 from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
-from .combatlog import SUFFIX_START, Fight
-
-DAMAGE_EVENTS = {"SPELL_DAMAGE", "SPELL_PERIODIC_DAMAGE", "RANGE_DAMAGE"}
-SWING_AMOUNT = SUFFIX_START - 3   # swings have no 3-field spell prefix
+from . import events as ev
+from .events import Event, Fight
 
 # Abilities the player presses (not procs or passive triggers).
 TRACKED_CASTS = {
@@ -20,22 +18,149 @@ TRACKED_CASTS = {
     188499: "Blade Dance", 210152: "Death Sweep", 162794: "Chaos Strike",
     201427: "Annihilation", 232893: "Felblade", 195072: "Fel Rush",
     185123: "Throw Glaive", 442294: "Reaver's Glaive",
+    452497: "Abyssal Gaze", 452487: "Consuming Fire",
 }
 # Throw Glaive (185123) also fires with 0 Fury cost at the same timestamp as
 # Blade Dance, Death Sweep or Reaver's Glaive (talent-triggered throws). Only a
 # 185123 cast with none of these within 50 ms counts as a button press.
 AUTO_THROW_TRIGGERS = {188499, 210152, 442294, 444686}
 THROW_GLAIVE = 185123
+META_CAST, META_BUFF = 200166, 162264
+DEMONSURGE = 452416
 
 # Cooldowns whose longest idle gap is worth showing.
 GAP_ABILITIES = ["Eye Beam", "Essence Break", "The Hunt", "Vengeful Retreat", "Metamorphosis"]
 
 TRACKED_BUFFS = {
-    162264: "Metamorphosis", 258920: "Immolation Aura", 442695: "Thrill of the Fight",
+    162264: "Metamorphosis (incl. Demonic)", 258920: "Immolation Aura", 442695: "Thrill of the Fight",
     391215: "Initiative", 208628: "Exergy", 343312: "Furious Gaze",
 }
 FEL_SCARRED_MARKERS = {"Demonsurge", "Abyssal Gaze", "Consuming Fire", "Sigil of Doom"}
 ALDRACHI_MARKERS = {"Reaver's Glaive", "Art of the Glaive", "Reaver's Mark"}
+
+
+@dataclass
+class MetaWindow:
+    start: float
+    end: float
+    from_cast: bool          # True for a pressed Metamorphosis, False for Demonic (Eye Beam)
+
+
+@dataclass
+class FightData:
+    """Everything the rules need about one player in one fight."""
+    fight: Fight
+    player: str
+    hero_tree: str
+    casts: dict[str, list[Event]]          # pressed casts by ability name
+    cast_names: Counter                    # every cast by spell name, as Warcraft Logs counts them
+    meta_windows: list[MetaWindow]
+    damage_by_ability: Counter
+    deaths: list[float]
+    own_events: list[Event]
+
+    @property
+    def duration(self) -> float:
+        return self.fight.duration
+
+    @property
+    def minutes(self) -> float:
+        return self.fight.duration / 60 if self.fight.duration else 1.0
+
+    def count(self, *names: str) -> int:
+        return sum(len(self.casts.get(n, [])) for n in names)
+
+    def per_min(self, *names: str) -> float:
+        return self.count(*names) / self.minutes
+
+    def name_per_min(self, name: str) -> float:
+        """Casts per minute counted by spell name, comparable with WCL benchmarks."""
+        return self.cast_names.get(name, 0) / self.minutes
+
+    def times(self, name: str) -> list[float]:
+        return [e.t for e in self.casts.get(name, [])]
+
+    def uptime(self, spell_id: int) -> float:
+        up_since, total = None, 0.0
+        for e in self.own_events:
+            if e.spell_id != spell_id or e.dst != self.player:
+                continue
+            if e.type == ev.AURA_APPLIED and up_since is None:
+                up_since = e.t
+            elif e.type == ev.AURA_REMOVED and up_since is not None:
+                total += e.t - up_since
+                up_since = None
+        if up_since is not None:
+            total += self.duration - up_since
+        return total / self.duration if self.duration else 0.0
+
+    def idle_gaps(self, threshold: float = 2.5, all_casts: bool = False) -> list[tuple[float, float]]:
+        """(start, length) of each gap over `threshold` s between casts.
+
+        all_casts=True also counts proc and talent-triggered casts, which is how
+        the Warcraft Logs benchmark measures it. Rough either way: forced downtime
+        (untargetable bosses, M+ travel) is not excluded yet.
+        """
+        if all_casts:
+            times = sorted(e.t for e in self.own_events if e.type == ev.CAST and e.src == self.player)
+        else:
+            times = sorted(e.t for cs in self.casts.values() for e in cs)
+        return [(a, b - a) for a, b in zip(times, times[1:]) if b - a > threshold]
+
+    def idle(self, threshold: float = 2.5, all_casts: bool = False) -> tuple[int, float]:
+        """(number of gaps, seconds lost beyond a 1.5 s GCD)."""
+        gaps = self.idle_gaps(threshold, all_casts)
+        return len(gaps), sum(g - 1.5 for _, g in gaps)
+
+
+def detect_hero_tree(events: list[Event], player: str) -> str:
+    names = {e.spell_name for e in events if e.src == player}
+    if names & FEL_SCARRED_MARKERS:
+        return "Fel-Scarred"
+    if names & ALDRACHI_MARKERS:
+        return "Aldrachi Reaver"
+    return "Unknown"
+
+
+def _meta_windows(events: list[Event], player: str, duration: float) -> list[MetaWindow]:
+    cast_times = [e.t for e in events if e.type == ev.CAST and e.src == player and e.spell_id == META_CAST]
+    windows, start = [], None
+    for e in events:
+        if e.spell_id != META_BUFF or e.dst != player:
+            continue
+        if e.type == ev.AURA_APPLIED and start is None:
+            start = e.t
+        elif e.type == ev.AURA_REMOVED and start is not None:
+            windows.append((start, e.t))
+            start = None
+    if start is not None:
+        windows.append((start, duration))
+    # A pressed Meta applies the buff within a GCD of the cast. Recasting Meta
+    # inside a Demonic window turns that window into a real one too.
+    return [MetaWindow(a, b, any(a - 0.5 <= t <= b for t in cast_times)) for a, b in windows]
+
+
+def build(fight: Fight, player: str) -> FightData:
+    own = [e for e in fight.events if e.src == player or e.dst == player]
+    triggers = [e.t for e in own if e.type == ev.CAST and e.src == player and e.spell_id in AUTO_THROW_TRIGGERS]
+    casts: dict[str, list[Event]] = defaultdict(list)
+    damage: Counter = Counter()
+    deaths = []
+    cast_names: Counter = Counter()
+    for e in own:
+        if e.type == ev.CAST and e.src == player:
+            cast_names[e.spell_name] += 1
+            name = TRACKED_CASTS.get(e.spell_id)
+            if e.spell_id == THROW_GLAIVE and any(abs(e.t - t) < 0.05 for t in triggers):
+                name = None
+            if name:
+                casts[name].append(e)
+        elif e.type == ev.DAMAGE and e.src == player:
+            damage[e.spell_name] += e.amount
+        elif e.type == ev.DIED and e.dst == player:
+            deaths.append(e.t)
+    return FightData(fight, player, detect_hero_tree(own, player), dict(casts), cast_names,
+                     _meta_windows(own, player, fight.duration), damage, deaths, own)
 
 
 @dataclass
@@ -44,11 +169,11 @@ class FightSummary:
     duration: float
     success: bool | None
     hero_tree: str
-    damage: int
+    damage: float
     dps: float
     casts: Counter
     cpm: float
-    damage_by_ability: list[tuple[str, int]]
+    damage_by_ability: list[tuple[str, float]]
     buff_uptime: dict[str, float]
     fury_at_meta: list[int]
     fury_at_essence_break: list[int]
@@ -58,90 +183,29 @@ class FightSummary:
     deaths: list[float] = field(default_factory=list)
 
 
-def detect_hero_tree(fight: Fight, player_guid: str) -> str:
-    names = {e.spell_name for e in fight.events
-             if e.src == player_guid and len(e.fields) > 10}
-    if names & FEL_SCARRED_MARKERS:
-        return "Fel-Scarred"
-    if names & ALDRACHI_MARKERS:
-        return "Aldrachi Reaver"
-    return "Unknown"
-
-
-def _uptime(fight: Fight, player_guid: str, spell_id: int) -> float:
-    up_since, total = None, 0.0
-    for e in fight.events:
-        if e.dst != player_guid or not e.type.startswith("SPELL_AURA") or e.spell_id != spell_id:
-            continue
-        if e.type == "SPELL_AURA_APPLIED" and up_since is None:
-            up_since = e.t
-        elif e.type == "SPELL_AURA_REMOVED" and up_since is not None:
-            total += e.t - up_since
-            up_since = None
-    if up_since is not None:
-        total += fight.duration - up_since
-    return total / fight.duration if fight.duration else 0.0
-
-
-def summarize(fight: Fight, player_guid: str) -> FightSummary:
-    casts: Counter = Counter()
-    cast_times: dict[str, list[float]] = defaultdict(list)
-    gcd_times: list[float] = []
-    dmg_by_ability: Counter = Counter()
-    fury_meta, fury_eb, deaths = [], [], []
-    trigger_times = [e.t for e in fight.events if e.type == "SPELL_CAST_SUCCESS"
-                     and e.src == player_guid and e.spell_id in AUTO_THROW_TRIGGERS]
-
-    for e in fight.events:
-        if e.type == "SPELL_CAST_SUCCESS" and e.src == player_guid:
-            name = TRACKED_CASTS.get(e.spell_id)
-            if e.spell_id == THROW_GLAIVE and any(abs(e.t - t) < 0.05 for t in trigger_times):
-                name = None
-            if name:
-                casts[name] += 1
-                cast_times[name].append(e.t)
-                gcd_times.append(e.t)
-                if name == "Metamorphosis":
-                    fury_meta.append(e.fury())
-                elif name == "Essence Break":
-                    fury_eb.append(e.fury())
-        elif e.src == player_guid and e.type in DAMAGE_EVENTS:
-            dmg_by_ability[e.spell_name] += int(e.fields[SUFFIX_START])
-        elif e.src == player_guid and e.type == "SWING_DAMAGE":
-            dmg_by_ability["Melee"] += int(e.fields[SWING_AMOUNT])
-        elif e.type == "UNIT_DIED" and e.dst == player_guid:
-            deaths.append(e.t)
-
-    # Idle time: gaps over 2.5 s between pressed abilities (approximate; forced
-    # downtime is not excluded yet).
-    idle_gaps, idle_seconds = 0, 0.0
-    for a, b in zip(gcd_times, gcd_times[1:]):
-        if b - a > 2.5:
-            idle_gaps += 1
-            idle_seconds += b - a - 1.0
-
+def summarize(data: FightData) -> FightSummary:
+    casts = Counter({n: len(cs) for n, cs in data.casts.items()})
     longest_gap = {}
     for name in GAP_ABILITIES:
-        times = [0.0] + cast_times.get(name, []) + [fight.duration]
+        times = [0.0] + data.times(name) + [data.duration]
         longest_gap[name] = max(b - a for a, b in zip(times, times[1:]))
-
-    damage = sum(dmg_by_ability.values())
-    minutes = fight.duration / 60 if fight.duration else 1
+    idle_gaps, idle_seconds = data.idle()
+    damage = sum(data.damage_by_ability.values())
     return FightSummary(
-        label=fight.label,
-        duration=fight.duration,
-        success=fight.success,
-        hero_tree=detect_hero_tree(fight, player_guid),
+        label=data.fight.label,
+        duration=data.duration,
+        success=data.fight.success,
+        hero_tree=data.hero_tree,
         damage=damage,
-        dps=damage / fight.duration if fight.duration else 0.0,
+        dps=damage / data.duration if data.duration else 0.0,
         casts=casts,
-        cpm=sum(casts.values()) / minutes,
-        damage_by_ability=dmg_by_ability.most_common(8),
-        buff_uptime={n: _uptime(fight, player_guid, sid) for sid, n in TRACKED_BUFFS.items()},
-        fury_at_meta=[f for f in fury_meta if f is not None],
-        fury_at_essence_break=[f for f in fury_eb if f is not None],
+        cpm=sum(casts.values()) / data.minutes,
+        damage_by_ability=data.damage_by_ability.most_common(8),
+        buff_uptime={n: data.uptime(sid) for sid, n in TRACKED_BUFFS.items()},
+        fury_at_meta=[e.fury for e in data.casts.get("Metamorphosis", []) if e.fury is not None],
+        fury_at_essence_break=[e.fury for e in data.casts.get("Essence Break", []) if e.fury is not None],
         longest_gap=longest_gap,
         idle_gaps=idle_gaps,
         idle_seconds=idle_seconds,
-        deaths=deaths,
+        deaths=data.deaths,
     )

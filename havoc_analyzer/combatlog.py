@@ -5,22 +5,31 @@ events that involve one player, so a 500+ MB log can be read in one pass.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Iterator
 
+from . import events as ev
+from .events import Event, Fight
+
 HAVOC_SPEC_ID = 577
-FURY_POWER_TYPE = 17
+FURY_POWER_TYPE = "17"
 
 # Field positions after splitting a line's CSV body (index 0 is the event name).
 # Advanced logging adds 19 fields after the spell prefix in v22 logs.
 SRC_GUID, SRC_NAME, DST_GUID, DST_NAME = 1, 2, 5, 6
 SPELL_ID, SPELL_NAME = 9, 10
 ADV_START = 12
-ADV_POWER_TYPE, ADV_CUR_POWER, ADV_MAX_POWER = ADV_START + 10, ADV_START + 11, ADV_START + 12
+ADV_POWER_TYPE, ADV_CUR_POWER = ADV_START + 10, ADV_START + 11
 SUFFIX_START = ADV_START + 19
+SWING_AMOUNT = SUFFIX_START - 3   # swings have no 3-field spell prefix
+NO_UNIT = "0000000000000000"
 
 DIFFICULTY_NAMES = {14: "Normal", 15: "Heroic", 16: "Mythic", 17: "LFR", 8: "Mythic+", 23: "Mythic"}
+
+SPELL_DAMAGE_EVENTS = {"SPELL_DAMAGE", "SPELL_PERIODIC_DAMAGE", "RANGE_DAMAGE"}
+AURA_EVENTS = {"SPELL_AURA_APPLIED": ev.AURA_APPLIED, "SPELL_AURA_REMOVED": ev.AURA_REMOVED,
+               "SPELL_AURA_REFRESH": ev.AURA_REFRESH}
 
 
 def split_fields(body: str) -> list[str]:
@@ -50,12 +59,10 @@ def split_fields(body: str) -> list[str]:
 
 
 def split_simple(body: str) -> list[str]:
-    """Fast path for event lines without nested brackets."""
-    if "[" in body or "(" in body:
+    """Fast path for event lines without quotes or nested brackets."""
+    if '"' in body or "[" in body or "(" in body:
         return split_fields(body)
-    if '"' not in body:
-        return body.split(",")
-    return split_fields(body)
+    return body.split(",")
 
 
 def parse_timestamp(stamp: str) -> datetime:
@@ -70,63 +77,34 @@ def parse_timestamp(stamp: str) -> datetime:
     return datetime(year, month, day, hh, mm, ss, micro, tzinfo=timezone(timedelta(hours=offset)))
 
 
-@dataclass
-class Event:
-    t: float            # seconds since fight start
-    type: str
-    fields: list[str]
-
-    @property
-    def spell_id(self) -> int:
-        return int(self.fields[SPELL_ID])
-
-    @property
-    def spell_name(self) -> str:
-        return self.fields[SPELL_NAME]
-
-    @property
-    def src(self) -> str:
-        return self.fields[SRC_GUID]
-
-    @property
-    def dst(self) -> str:
-        return self.fields[DST_GUID]
-
-    def fury(self) -> int | None:
-        """Player's current Fury from the advanced params, if this event has them."""
-        if len(self.fields) <= ADV_MAX_POWER:
-            return None
-        types = self.fields[ADV_POWER_TYPE].split("|")
-        values = self.fields[ADV_CUR_POWER].split("|")
-        for ptype, value in zip(types, values):
-            if ptype == str(FURY_POWER_TYPE):
-                return int(value)
+def _fury(f: list[str]) -> int | None:
+    if len(f) <= ADV_CUR_POWER:
         return None
+    for ptype, value in zip(f[ADV_POWER_TYPE].split("|"), f[ADV_CUR_POWER].split("|")):
+        if ptype == FURY_POWER_TYPE:
+            return int(value)
+    return None
 
 
-@dataclass
-class Fight:
-    kind: str                    # "encounter" or "mythic_plus"
-    name: str
-    zone: str
-    difficulty: str
-    start: datetime
-    end: datetime | None = None
-    success: bool | None = None
-    encounter_id: int | None = None
-    keystone_level: int | None = None
-    events: list[Event] = field(default_factory=list)
-    children: list["Fight"] = field(default_factory=list)   # boss pulls inside a key
-
-    @property
-    def duration(self) -> float:
-        return (self.end - self.start).total_seconds() if self.end else 0.0
-
-    @property
-    def label(self) -> str:
-        if self.kind == "mythic_plus":
-            return f"{self.name} +{self.keystone_level}"
-        return f"{self.name} ({self.difficulty})"
+def to_event(t: float, f: list[str]) -> Event | None:
+    """Map one split log line to a normalized Event, or None if it's not one we use."""
+    name = f[0]
+    dst = "" if f[DST_GUID] == NO_UNIT else f[DST_GUID]
+    if name == "SPELL_CAST_SUCCESS":
+        return Event(t, ev.CAST, f[SRC_GUID], dst, int(f[SPELL_ID]), f[SPELL_NAME], fury=_fury(f))
+    if name in SPELL_DAMAGE_EVENTS:
+        return Event(t, ev.DAMAGE, f[SRC_GUID], dst, int(f[SPELL_ID]), f[SPELL_NAME],
+                     amount=float(f[SUFFIX_START]))
+    if name == "SWING_DAMAGE":
+        return Event(t, ev.DAMAGE, f[SRC_GUID], dst, 1, "Melee", amount=float(f[SWING_AMOUNT]))
+    if name in AURA_EVENTS:
+        return Event(t, AURA_EVENTS[name], f[SRC_GUID], dst, int(f[SPELL_ID]), f[SPELL_NAME])
+    if name == "SPELL_ENERGIZE":
+        return Event(t, ev.ENERGIZE, f[SRC_GUID], dst, int(f[SPELL_ID]), f[SPELL_NAME],
+                     amount=float(f[SUFFIX_START]))
+    if name == "UNIT_DIED":
+        return Event(t, ev.DIED, "", dst)
+    return None
 
 
 @dataclass
@@ -194,9 +172,11 @@ def parse(path: str, player_guid: str | None = None) -> ParsedLog:
     key: Fight | None = None
     boss: Fight | None = None
 
+    def close(fight: Fight, stamp: str) -> None:
+        fight.duration = (parse_timestamp(stamp) - fight.start).total_seconds()
+
     for stamp, body in iter_lines(path):
-        head = body[:24]
-        if head.startswith(("ENCOUNTER_", "CHALLENGE_MODE_", "ZONE_CHANGE", "COMBAT_LOG_VERSION", "COMBATANT_INFO")):
+        if body.startswith(("ENCOUNTER_", "CHALLENGE_MODE_", "ZONE_CHANGE", "COMBAT_LOG_VERSION", "COMBATANT_INFO")):
             f = split_fields(body)
             event = f[0]
             if event == "COMBAT_LOG_VERSION":
@@ -206,20 +186,20 @@ def parse(path: str, player_guid: str | None = None) -> ParsedLog:
             elif event == "COMBATANT_INFO" and f[1] == player_guid and player is None:
                 player = Combatant(player_guid, "", int(f[25]), _parse_talents(f[26]))
             elif event == "CHALLENGE_MODE_START":
-                key = Fight("mythic_plus", f[1], f[1], "Mythic+", parse_timestamp(stamp),
+                key = Fight("mythic_plus", f[1], f[1], "Mythic+", start=parse_timestamp(stamp),
                             keystone_level=int(f[4]))
                 fights.append(key)
             elif event == "CHALLENGE_MODE_END" and key is not None:
-                key.end = parse_timestamp(stamp)
+                close(key, stamp)
                 key.success = f[2] == "1"
                 key = None
             elif event == "ENCOUNTER_START":
                 diff = int(f[3])
                 boss = Fight("encounter", f[2], zone, DIFFICULTY_NAMES.get(diff, str(diff)),
-                             parse_timestamp(stamp), encounter_id=int(f[1]))
+                             start=parse_timestamp(stamp), encounter_id=int(f[1]), in_key=key is not None)
                 (key.children if key else fights).append(boss)
             elif event == "ENCOUNTER_END" and boss is not None:
-                boss.end = parse_timestamp(stamp)
+                close(boss, stamp)
                 boss.success = f[5] == "1"
                 # Drop instant resets (pulls under 5 s, e.g. wipe-and-reset blips).
                 if boss.duration < 5:
@@ -227,8 +207,7 @@ def parse(path: str, player_guid: str | None = None) -> ParsedLog:
                 boss = None
             continue
 
-        active = [x for x in (key, boss) if x is not None]
-        if not active or player_guid not in body:
+        if (key is None and boss is None) or player_guid not in body:
             continue
         f = split_simple(body)
         if len(f) < 9 or (f[SRC_GUID] != player_guid and f[DST_GUID] != player_guid):
@@ -236,7 +215,10 @@ def parse(path: str, player_guid: str | None = None) -> ParsedLog:
         if player is not None and not player.name and f[SRC_GUID] == player_guid:
             player.name = f[SRC_NAME]
         now = parse_timestamp(stamp)
-        for fight in active:
-            fight.events.append(Event((now - fight.start).total_seconds(), f[0], f))
+        for fight in (key, boss):
+            if fight is not None:
+                e = to_event((now - fight.start).total_seconds(), f)
+                if e is not None:
+                    fight.events.append(e)
 
     return ParsedLog(build, player, fights)

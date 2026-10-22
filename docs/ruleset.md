@@ -1,8 +1,31 @@
 # Havoc Demon Hunter Ruleset (v0, draft)
 
-Patch target: **12.1.5 (Midnight)**. Drafted 2026-10-22 from guides only. Not yet checked against top-player logs (see "Open items").
+Patch target: **12.1.5 (Midnight)**. Drafted 2026-10-22 from guides, then corrected against 32 top-player logs (see `docs/wcl-findings.md`).
 
 Each rule has an id, what it checks, how a log can detect it, a default severity, and its sources. Severity: **High** = clear DPS loss, **Med** = likely loss, **Low** = minor or context-dependent.
+
+## How the analyzer checks these (v1, `havoc_analyzer/rules.py`)
+
+Cast-rate rules compare your casts per minute with the median of top-player logs for the same content (raid or M+) and hero tree, from `wcl/data/benchmarks.json`: 90% or more is fine, 75 to 90% is a warning, under 75% is a flag. That stands in for an exact cooldown model, which would have to follow haste, Cycle of Hatred and resets.
+
+| Rule | Status | How it's checked |
+|---|---|---|
+| S1, S3, S4, S5, S8 | Checked | Casts per minute vs. top players. |
+| S2 | Checked | A Metamorphosis cast with no Eye Beam in the 10 s before it is flagged (Eye Beam was likely ready or nearly ready). |
+| S6 | Proxy | Immolation Aura casts per minute vs. top players. Charges aren't in the log. |
+| S7 | Checked | Pressed Throw Glaive casts only (talent-triggered ones excluded). Warns at 0.5/min or more. |
+| S9 | Checked | Fury at each Metamorphosis (under 90) and Essence Break (under 80). Top players enter at 100 to 150. |
+| S11 | Checked | Gaps over 2.5 s between casts, same method as the benchmark. Forced downtime isn't excluded yet. |
+| S13 | Checked | Damage potion in the first 20 s or inside a pressed Metamorphosis. |
+| AR1 | Info only | Reaver's Glaive per minute is shown but not judged: the top-player number (about 9/min) looks too high and is being re-checked. |
+| AR2 | Checked | Each Reaver's Glaive should be followed by Thrill of the Fight before the next Glaive. |
+| AR4 | Checked | Thrill of the Fight uptime: 80% fine, 65% warning. |
+| AR5, FS4 | Checked (raid) | First 20 s of casts vs. the Method opener order. |
+| FS2 | Checked | Demonsurge hits per pressed Metamorphosis window, 7 or more expected. |
+| FS3 | Checked | Abyssal Gaze and Consuming Fire in every pressed Metamorphosis window. |
+| S10, S12, AR3, FS1 | Not yet | Need Fury spend tracking, cooldown state or buff state per spender. |
+
+"Pressed Metamorphosis" means a Meta buff window that starts with a Metamorphosis cast. Demonic windows after Eye Beam use the same buff and are told apart this way.
 
 ## Sources
 
