@@ -82,7 +82,9 @@ def load_fight(client, code: str, fight_id: int, player_name: str) -> tuple[Figh
     names = client.abilities(code)
     start, end = meta["startTime"], meta["endTime"]
     key_level = meta.get("keystoneLevel")
-    is_key = bool(key_level) and not meta.get("encounterID")
+    # WCL reports a whole key as one fight whose encounterID is the dungeon's, so a
+    # keystone level alone marks it. Boss pulls inside a key are not separate fights.
+    is_key = bool(key_level)
     fight = Fight(
         kind="mythic_plus" if is_key else "encounter",
         name=meta["name"], zone="",
@@ -91,7 +93,6 @@ def load_fight(client, code: str, fight_id: int, player_name: str) -> tuple[Figh
         success=meta.get("kill"),
         encounter_id=meta.get("encounterID") or None,
         keystone_level=key_level,
-        in_key=bool(key_level) and not is_key,
     )
     span = dict(start=start, end=end)
     seen = set()
