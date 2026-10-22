@@ -54,7 +54,8 @@ class Rule:
     title: str
     severity: str
     tree: str | None
-    check: Callable[[FightData, Benchmark | None], tuple[str, str, list[float]] | None]
+    check: Callable[[FightData, Benchmark | None], tuple[str, str, list[float]] | None] | None
+    explain: str = ""   # plain-language version for the Rules tab
 
 
 def fmt(t: float) -> str:
@@ -228,29 +229,84 @@ def _opener(d: FightData, b):
 
 
 RULES = [
-    Rule("S1", "Eye Beam on cooldown", "High", BOTH, _rate_check(["Eye Beam"], "Eye Beam")),
-    Rule("S2", "Eye Beam before Metamorphosis", "High", BOTH, _meta_after_eye_beam),
-    Rule("S3", "Essence Break on cooldown", "Med", BOTH, _rate_check(["Essence Break"], "Essence Break")),
-    Rule("S4", "Vengeful Retreat on cooldown", "Med", BOTH, _rate_check(["Vengeful Retreat"], "Vengeful Retreat")),
-    Rule("S5", "The Hunt on cooldown", "Med", BOTH, _rate_check(["The Hunt"], "The Hunt")),
-    Rule("S6", "Immolation Aura charges used", "Med", BOTH, _rate_check(["Immolation Aura"], "Immolation Aura")),
-    Rule("S7", "No manual Throw Glaive", "Low", BOTH, _manual_throws),
+    Rule("S1", "Eye Beam on cooldown", "High", BOTH, _rate_check(["Eye Beam"], "Eye Beam"),
+         "Eye Beam is your strongest regular button. Press it whenever it's ready, unless adds spawn "
+         "in the next few seconds."),
+    Rule("S2", "Eye Beam before Metamorphosis", "High", BOTH, _meta_after_eye_beam,
+         "Cast Eye Beam just before Metamorphosis. Metamorphosis resets Eye Beam's cooldown, so if Eye Beam "
+         "was ready you throw that reset away."),
+    Rule("S3", "Essence Break on cooldown", "Med", BOTH, _rate_check(["Essence Break"], "Essence Break"),
+         "Press Essence Break whenever it's ready, even outside Metamorphosis. Don't hold it to line it up "
+         "with Eye Beam."),
+    Rule("S4", "Vengeful Retreat on cooldown", "Med", BOTH, _rate_check(["Vengeful Retreat"], "Vengeful Retreat"),
+         "Use Vengeful Retreat whenever it's ready. With Exergy and Initiative it's a damage buff, not just "
+         "a movement button. Guides pair it with Eye Beam, but that isn't checked."),
+    Rule("S5", "The Hunt on cooldown", "Med", BOTH, _rate_check(["The Hunt"], "The Hunt"),
+         "Use The Hunt whenever it's ready. As Aldrachi Reaver, throw Reaver's Glaive first if both are ready, "
+         "because The Hunt gives you a new one."),
+    Rule("S6", "Immolation Aura charges used", "Med", BOTH, _rate_check(["Immolation Aura"], "Immolation Aura"),
+         "Immolation Aura has two charges. Don't let both sit full, or the recharge time is wasted."),
+    Rule("S7", "No manual Throw Glaive", "Low", BOTH, _manual_throws,
+         "Don't press Throw Glaive yourself unless you can't reach the target. Glaives your talents throw "
+         "for you don't count, and a few throws as Fel-Scarred in Mythic+ are minor."),
     Rule("S8", "Blade Dance / Death Sweep on cooldown", "Med", BOTH,
-         _rate_check(["Blade Dance", "Death Sweep"], "Blade Dance + Death Sweep")),
+         _rate_check(["Blade Dance", "Death Sweep"], "Blade Dance + Death Sweep"),
+         "Keep Blade Dance (Death Sweep in Metamorphosis) on cooldown, and keep enough Fury to afford it "
+         "when it comes back."),
     Rule("S9a", "Enough Fury for Metamorphosis", "Med", BOTH,
-         _fury_at("Metamorphosis", LOW_FURY_META, "fury_at_meta")),
+         _fury_at("Metamorphosis", LOW_FURY_META, "fury_at_meta"),
+         f"Go into Metamorphosis with at least {LOW_FURY_META} Fury so you can spend right away. "
+         "Top players enter with 100 to 150."),
     Rule("S9b", "Enough Fury for Essence Break", "Med", BOTH,
-         _fury_at("Essence Break", LOW_FURY_EB, "fury_at_essence_break")),
-    Rule("S11", "Avoid dead time", "High", BOTH, _idle),
-    Rule("S13", "Potion with burst", "Med", BOTH, _potion_with_meta),
-    Rule("AR1", "Reaver's Glaive on time", "High", AR, _rate_check(["Reaver's Glaive"], "Reaver's Glaive")),
-    Rule("AR2", "Both empowered spenders after each Glaive", "High", AR, _thrill_per_glaive),
-    Rule("AR4", "Thrill of the Fight uptime", "Med", AR, _thrill_uptime),
-    Rule("AR5", "Opener", "Low", AR, _opener),
-    Rule("FS2", "Demonsurge in every Metamorphosis", "High", FS, _fs_demonsurge),
-    Rule("FS3", "Abyssal Gaze and Consuming Fire in Metamorphosis", "High", FS, _fs_meta_spenders),
-    Rule("FS4", "Opener", "Low", FS, _opener),
+         _fury_at("Essence Break", LOW_FURY_EB, "fury_at_essence_break"),
+         f"Go into Essence Break with at least {LOW_FURY_EB} Fury so its short damage window is full "
+         "of spenders."),
+    Rule("S11", "Avoid dead time", "High", BOTH, _idle,
+         "Always be pressing something. Every second with nothing cast while you could hit the target is "
+         "lost damage. Boss downtime and travel between Mythic+ pulls still count for now, so check the "
+         "listed times."),
+    Rule("S13", "Potion with burst", "Med", BOTH, _potion_with_meta,
+         f"Drink your damage potion in the opener or with Metamorphosis (up to {PREPOT_S:.0f} s before it "
+         "is fine), so it boosts your biggest damage."),
+    Rule("AR1", "Reaver's Glaive on time", "High", AR, _rate_check(["Reaver's Glaive"], "Reaver's Glaive"),
+         "Throw Reaver's Glaive as soon as it's available, at the main target. The exception is holding it a "
+         "few seconds for an add wave you want to cleave."),
+    Rule("AR2", "Both empowered spenders after each Glaive", "High", AR, _thrill_per_glaive,
+         "After each Reaver's Glaive, use both empowered attacks (Rending Strike and Glaive Flurry) before "
+         "the next Glaive. Doing both gives you Thrill of the Fight."),
+    Rule("AR4", "Thrill of the Fight uptime", "Med", AR, _thrill_uptime,
+         "Thrill of the Fight is a 30 s window you get from doing both empowered attacks. Don't watch it while "
+         "playing: if AR2 is clean, this follows. Top players have it about 78% of a raid fight and 70% of a key."),
+    Rule("AR5", "Opener", "Low", AR, _opener,
+         "Start the pull with Method's Aldrachi Reaver opener: The Hunt, Reaver's Glaive, Eye Beam, "
+         "Essence Break, spenders, then Metamorphosis. Checked on raid bosses only."),
+    Rule("FS2", "Demonsurge in every Metamorphosis", "High", FS, _fs_demonsurge,
+         "In Metamorphosis, trigger every Demonsurge: Death Sweep and Annihilation first, then Abyssal Gaze "
+         "and Consuming Fire. A full window has 7 or more."),
+    Rule("FS3", "Abyssal Gaze and Consuming Fire in Metamorphosis", "High", FS, _fs_meta_spenders,
+         "Cast both Abyssal Gaze and Consuming Fire in every Metamorphosis you press."),
+    Rule("FS4", "Opener", "Low", FS, _opener,
+         "Start the pull with Method's Fel-Scarred opener: Eye Beam, The Hunt, Essence Break, spenders, "
+         "then Metamorphosis with Abyssal Gaze and Consuming Fire. Checked on raid bosses only."),
 ]
+
+# In the ruleset but not checked yet (docs/ruleset.md). Listed in the Rules tab only.
+NOT_CHECKED = [
+    Rule("S10", "Spend Fury during Metamorphosis", "Med", BOTH, None,
+         "Keep spending Fury while Metamorphosis is up. Spending extends it (Shattered Destiny)."),
+    Rule("S12", "Fel Rush only as filler", "Low", BOTH, None,
+         "Use Fel Rush only when nothing else is ready or to get back to the target."),
+    Rule("AR3", "Right spender order after a Glaive", "Med", AR, None,
+         "On one target, use Blade Dance then Chaos Strike to build Reaver's Mark to 3 stacks, and use "
+         "Chaos Strike first once you have 2 or more. With 2 or more targets, always Chaos Strike first."),
+    Rule("FS1", "Immolation Aura before Metamorphosis", "Med", FS, None,
+         "Spend your Immolation Aura charges before you press Metamorphosis."),
+]
+
+
+def rules_for(tree: str | None, rules: list[Rule] = RULES) -> list[Rule]:
+    """Rules that apply to a hero tree: the shared ones, then the tree's own."""
+    return [r for r in rules if r.tree is BOTH or r.tree == tree]
 
 
 def evaluate(d: FightData, bench: Benchmark | None) -> list[Finding]:

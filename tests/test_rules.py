@@ -3,7 +3,7 @@ import unittest
 from havoc_analyzer import events as ev
 from havoc_analyzer.benchmarks import Benchmark
 from havoc_analyzer.events import Event, Fight
-from havoc_analyzer.rules import FLAG, INFO, OK, WARN, evaluate
+from havoc_analyzer.rules import AR, FLAG, FS, INFO, NOT_CHECKED, OK, RULES, WARN, evaluate, rules_for
 from havoc_analyzer.summary import build
 from havoc_analyzer.wcl_source import load_fight, parse_report_url, to_event
 
@@ -94,6 +94,19 @@ class RuleTest(unittest.TestCase):
         f = findings(events, Benchmark("raid", "AR", 8, idle_per_min=0.6))
         self.assertEqual(f["S11"].status, FLAG)
         self.assertEqual(f["S11"].times, [20])
+
+
+class RuleListTest(unittest.TestCase):
+    def test_every_rule_explained(self):
+        for rule in RULES + NOT_CHECKED:
+            self.assertTrue(rule.explain, rule.id)
+
+    def test_rules_for_tree(self):
+        ids = {r.id for r in rules_for(AR)}
+        self.assertIn("S1", ids)
+        self.assertIn("AR2", ids)
+        self.assertNotIn("FS3", ids)
+        self.assertEqual({r.id for r in rules_for(FS, NOT_CHECKED)}, {"S10", "S12", "FS1"})
 
 
 class DeathTest(unittest.TestCase):

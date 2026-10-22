@@ -5,6 +5,7 @@ import glob
 import html
 import os
 import sys
+from collections import Counter
 
 from PySide6.QtCore import QFileSystemWatcher, QSettings, Qt, QThread, QTimer
 from PySide6.QtGui import QAction, QActionGroup, QFont, QKeySequence
@@ -20,6 +21,7 @@ from havoc_analyzer.rules import FLAG, WARN, fmt
 
 from . import theme
 from .charts import Bar, BarChart, Series, StatTile, StatusDelegate, card
+from .rules_tab import RulesPage
 from .timeline import Timeline
 from .workers import LoadedLog, LogWorker, WclWorker
 
@@ -176,6 +178,8 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.findings, "Findings")
         self.tabs.addTab(self.timeline, "Timeline")
         self.tabs.addTab(scroll, "Casts and buffs")
+        self.rules_page = RulesPage()
+        self.tabs.addTab(self.rules_page, "Rules")
         layout.addWidget(self.tabs, 1)
         split.addWidget(right)
         split.setSizes([480, 800])
@@ -392,9 +396,12 @@ class MainWindow(QMainWindow):
             status = FLAG if flags else WARN
             self._add_row(status, titles[rule], f"Fix in {flags} · check in {warns}", "", None)
         self.timeline.set_result(None)
+        trees = Counter(r.summary.hero_tree for r in results)
+        self.rules_page.set_detected(trees.most_common(1)[0][0] if trees else None)
         self._set_charts([self._dps_chart(results), self._rules_chart(rows, counts, titles)])
         self.tabs.setTabText(2, "Charts")
-        self.tabs.setCurrentWidget(self.findings)
+        if self.tabs.currentWidget() is not self.rules_page:
+            self.tabs.setCurrentWidget(self.findings)
 
     def _show_fight(self, r: FightResult) -> None:
         s = r.summary
@@ -420,6 +427,7 @@ class MainWindow(QMainWindow):
             when = ", ".join(fmt(x) for x in f.times[:8]) + (" …" if len(f.times) > 8 else "")
             self._add_row(f.status, f"{f.rule} {f.title} ({f.severity})", f.detail, when, (r, f.times))
         self.timeline.set_result(r)
+        self.rules_page.set_detected(s.hero_tree)
         self._set_charts(self._fight_charts(r))
         self.tabs.setTabText(2, "Casts and buffs")
 
