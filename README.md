@@ -4,19 +4,39 @@ Finds mistakes and improvements in Havoc Demon Hunter play from World of Warcraf
 
 ## Layout
 
+- `havoc_gui/` - the PySide6 desktop app; `havoc_analyzer.spec` builds it with PyInstaller.
 - `havoc_analyzer/` - the analyzer (Python 3.10+, standard library only):
   - `events.py` - the shared event and fight model.
   - `combatlog.py` - raw `WoWCombatLog.txt` parser (boss pulls and Mythic+ keys).
   - `wcl_source.py` - loads one Warcraft Logs fight into the same model.
   - `summary.py` - per-fight data: pressed casts, real Metamorphosis windows, uptimes, idle time.
-  - `rules.py` - the ruleset checks; `benchmarks.py` - top-player medians.
+  - `rules.py` - the ruleset checks; `benchmarks.py` - top-player medians; `report.py` - runs them and writes the report.
 - `tests/` - unit tests: `python -m unittest discover -s tests -t .`
 - `wcl/` - Warcraft Logs v2 API client, top-player rankings and benchmarks. Needs `WCL_CLIENT_ID` and `WCL_CLIENT_SECRET` in the environment; never commit them.
 - `docs/ruleset.md` - the rules the analyzer checks, each tied to a source.
 - `docs/wcl-findings.md` - top-log benchmarks and the raw log vs. API comparison.
 - `docs/sample-report-2026-10-21.md` - example output.
 
-## Run
+## Desktop app
+
+![Findings for one pull](docs/images/app-findings.png)
+
+- **Open log…** reads a `WoWCombatLog*.txt` (about 8 s for a 600 MB raid night).
+- **Watch Logs folder** loads the newest log and reloads it about 20 s after each pull ends.
+- **From Warcraft Logs…** loads a report link (add `#fight=N` for one pull). It needs your WCL v2 client ID and secret, which are saved only in your user settings on this computer.
+- Pick a pull or key on the left to see its findings. Double-click a finding to see it on the **Timeline**, which shows the key cooldowns with pressed Metamorphosis and Demonic windows shaded.
+- **Export report…** saves the Markdown report.
+
+![Timeline](docs/images/app-timeline.png)
+
+**Windows download:** every push builds `HavocAnalyzer.exe`. Open the repo's Actions tab, pick the latest **build-app** run, and download the `HavocAnalyzer-windows` artifact.
+
+**Run from source:**
+
+    pip install -r requirements.txt
+    python -m havoc_gui [path/to/WoWCombatLog.txt]
+
+## Command line
 
     python -m havoc_analyzer path/to/WoWCombatLog.txt --out report.md
 

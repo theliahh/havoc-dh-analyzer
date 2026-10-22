@@ -5,9 +5,12 @@ events that involve one player, so a 500+ MB log can be read in one pass.
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Iterator
+from typing import Callable, Iterator
+
+Progress = Callable[[float], None]   # called with the fraction of the file read, 0..1
 
 from . import events as ev
 from .events import Event, Fight
@@ -131,19 +134,25 @@ def _parse_talents(raw: str) -> list[tuple[int, int, int]]:
     return out
 
 
-def iter_lines(path: str) -> Iterator[tuple[str, str]]:
+def iter_lines(path: str, progress: Progress | None = None) -> Iterator[tuple[str, str]]:
+    size = os.path.getsize(path) or 1
+    read = 0
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
-        for line in fh:
+        for n, line in enumerate(fh):
+            if progress is not None:
+                read += len(line)
+                if n % 50000 == 0:
+                    progress(min(read / size, 1.0))
             stamp, sep, body = line.rstrip("\n").partition("  ")
             if sep:
                 yield stamp, body
 
 
-def find_havoc_players(path: str) -> dict[str, str]:
+def find_havoc_players(path: str, progress: Progress | None = None) -> dict[str, str]:
     """Return {guid: name} for every Havoc DH in the log."""
     specs: dict[str, int] = {}
     names: dict[str, str] = {}
-    for _, body in iter_lines(path):
+    for _, body in iter_lines(path, progress):
         if body.startswith("COMBATANT_INFO,"):
             f = split_fields(body)
             specs[f[1]] = int(f[25])
@@ -154,7 +163,7 @@ def find_havoc_players(path: str) -> dict[str, str]:
     return {g: names.get(g, g) for g, s in specs.items() if s == HAVOC_SPEC_ID}
 
 
-def parse(path: str, player_guid: str | None = None) -> ParsedLog:
+def parse(path: str, player_guid: str | None = None, progress: Progress | None = None) -> ParsedLog:
     """Parse a log into fights holding only events where the player is source or target.
 
     If player_guid is None, the first Havoc Demon Hunter found is used.
@@ -175,7 +184,7 @@ def parse(path: str, player_guid: str | None = None) -> ParsedLog:
     def close(fight: Fight, stamp: str) -> None:
         fight.duration = (parse_timestamp(stamp) - fight.start).total_seconds()
 
-    for stamp, body in iter_lines(path):
+    for stamp, body in iter_lines(path, progress):
         if body.startswith(("ENCOUNTER_", "CHALLENGE_MODE_", "ZONE_CHANGE", "COMBAT_LOG_VERSION", "COMBATANT_INFO")):
             f = split_fields(body)
             event = f[0]

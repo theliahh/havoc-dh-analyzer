@@ -5,7 +5,7 @@ from havoc_analyzer.benchmarks import Benchmark
 from havoc_analyzer.events import Event, Fight
 from havoc_analyzer.rules import FLAG, INFO, OK, evaluate
 from havoc_analyzer.summary import build
-from havoc_analyzer.wcl_source import to_event
+from havoc_analyzer.wcl_source import parse_report_url, to_event
 
 ME, BOSS = "me", "boss"
 
@@ -88,6 +88,12 @@ class WclAdapterTest(unittest.TestCase):
         e = to_event(raw, 10000, {200166: "Metamorphosis"})
         self.assertEqual((e.t, e.type, e.src, e.dst, e.spell_name, e.fury), (2.5, ev.CAST, "wcl:7", "wcl:99",
                                                                               "Metamorphosis", 112))
+
+    def test_parse_report_url(self):
+        self.assertEqual(parse_report_url("https://www.warcraftlogs.com/reports/AbC123#fight=7&type=damage-done"),
+                         ("AbC123", 7))
+        self.assertEqual(parse_report_url("https://www.warcraftlogs.com/reports/AbC123/"), ("AbC123", None))
+        self.assertEqual(parse_report_url(" AbC123 "), ("AbC123", None))
 
     def test_unknown_type_and_other_resource_dropped(self):
         self.assertIsNone(to_event({"timestamp": 0, "type": "begincast"}, 0, {}))

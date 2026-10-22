@@ -1,0 +1,3 @@
+# The analyzer itself (havoc_analyzer) needs only the Python standard library.
+PySide6>=6.6        # desktop app (havoc_gui)
+requests>=2.31      # Warcraft Logs client (wcl/)
