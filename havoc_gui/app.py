@@ -7,22 +7,25 @@ import os
 import sys
 
 from PySide6.QtCore import QFileSystemWatcher, QSettings, Qt, QThread, QTimer
-from PySide6.QtGui import QAction, QColor, QKeySequence
+from PySide6.QtGui import QAction, QActionGroup, QFont, QKeySequence
 from PySide6.QtWidgets import (
-    QApplication, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHeaderView, QLabel,
-    QLineEdit, QMainWindow, QMessageBox, QProgressBar, QSplitter, QTableWidget, QTableWidgetItem, QTabWidget,
-    QTextBrowser, QToolBar, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+    QApplication, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QHeaderView,
+    QLabel, QLineEdit, QMainWindow, QMenu, QMessageBox, QProgressBar, QScrollArea, QSizePolicy, QSplitter,
+    QTableWidget, QTableWidgetItem, QTabWidget, QToolBar, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+    QWidget,
 )
 
-from havoc_analyzer.report import FightResult, render_overview, render_report
-from havoc_analyzer.rules import FLAG, INFO, OK, WARN, fmt
+from havoc_analyzer.report import FightResult, render_report
+from havoc_analyzer.rules import FLAG, WARN, fmt
 
+from . import theme
+from .charts import Bar, BarChart, Series, StatTile, StatusDelegate, card
 from .timeline import Timeline
 from .workers import LoadedLog, LogWorker, WclWorker
 
 APP_NAME = "Havoc Analyzer"
-STATUS_TEXT = {FLAG: "🔴", WARN: "🟡", OK: "🟢", INFO: "⚪"}
-STATUS_TINT = {FLAG: QColor(220, 60, 60, 45), WARN: QColor(225, 170, 30, 45)}
+STATUS_ROLE = Qt.UserRole + 1
+THEME_LABEL = {"system": "Match system", "light": "Light", "dark": "Dark"}
 DEFAULT_LOG_DIRS = [
     r"C:\Program Files (x86)\World of Warcraft\_retail_\Logs",
     r"C:\Program Files\World of Warcraft\_retail_\Logs",
@@ -90,19 +93,40 @@ class MainWindow(QMainWindow):
         self.export_act = QAction("Export report…", self, enabled=False, triggered=self.export_report)
         for act in (open_act, self.watch_act, wcl_act, self.export_act):
             bar.addAction(act)
+        bar.widgetForAction(open_act).setObjectName("primary")
         bar.addSeparator()
-        bar.addWidget(QLabel(" Player: "))
-        self.player_box = QComboBox(minimumWidth=200, enabled=False)
+        bar.addWidget(QLabel(" Player "))
+        self.player_box = QComboBox(minimumWidth=220, enabled=False)
         self.player_box.activated.connect(self._player_changed)
         bar.addWidget(self.player_box)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        bar.addWidget(spacer)
+
+        menu = QMenu(self)
+        group = QActionGroup(self, exclusive=True)
+        mode = self.settings.value("theme", "system")
+        for key, label in THEME_LABEL.items():
+            act = QAction(label, self, checkable=True, checked=key == mode)
+            act.triggered.connect(lambda _=False, k=key: self.set_theme(k))
+            group.addAction(act)
+            menu.addAction(act)
+        self.theme_button = QToolButton(text="◐  Theme", popupMode=QToolButton.InstantPopup)
+        self.theme_button.setMenu(menu)
+        self.theme_button.setToolTip("Light, dark, or match Windows")
+        bar.addWidget(self.theme_button)
 
     def _build_body(self) -> None:
         split = QSplitter(Qt.Horizontal)
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabels(["Fight", "Result", "Time", "🔴", "🟡"])
+        self.tree.setHeaderLabels(["Fight", "Result", "Time", "Fix", "Check"])
+        self.tree.headerItem().setToolTip(3, "Rules flagged as likely DPS lost")
+        self.tree.headerItem().setToolTip(4, "Rules worth a look")
+        self.tree.setIndentation(14)
         self.tree.setRootIsDecorated(True)
         self.tree.currentItemChanged.connect(self._fight_selected)
         header = self.tree.header()
+        header.setStretchLastSection(False)
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         for col in range(1, 5):
             header.setSectionResizeMode(col, QHeaderView.ResizeToContents)
@@ -110,14 +134,26 @@ class MainWindow(QMainWindow):
 
         right = QWidget()
         layout = QVBoxLayout(right)
-        layout.setContentsMargins(8, 0, 0, 0)
-        self.heading = QLabel("Open a combat log to start.")
-        self.heading.setTextFormat(Qt.RichText)
-        self.heading.setWordWrap(True)
+        layout.setContentsMargins(4, 0, 0, 0)
+        layout.setSpacing(10)
+        self.heading = QLabel("Open a combat log to start", objectName="title")
+        self.subheading = QLabel("Use Open log, Watch Logs folder or From Warcraft Logs above.", objectName="secondary")
+        self.subheading.setWordWrap(True)
+        self.subheading.setTextFormat(Qt.RichText)
         layout.addWidget(self.heading)
+        layout.addWidget(self.subheading)
+        tiles = QHBoxLayout()
+        tiles.setSpacing(10)
+        self.tiles = [StatTile() for _ in range(5)]
+        for tile in self.tiles:
+            tile.setVisible(False)
+            tiles.addWidget(tile)
+        layout.addLayout(tiles)
         self.tabs = QTabWidget()
         self.findings = QTableWidget(0, 4)
-        self.findings.setHorizontalHeaderLabels(["", "Rule", "Result", "Look at"])
+        self.findings.setHorizontalHeaderLabels(["Status", "Rule", "Result", "Look at"])
+        self.findings.setItemDelegateForColumn(0, StatusDelegate(self.findings))
+        self.findings.setShowGrid(False)
         self.findings.verticalHeader().setVisible(False)
         self.findings.setEditTriggers(QTableWidget.NoEditTriggers)
         self.findings.setSelectionBehavior(QTableWidget.SelectRows)
@@ -127,19 +163,30 @@ class MainWindow(QMainWindow):
         fh.setSectionResizeMode(1, QHeaderView.ResizeToContents)
         fh.setSectionResizeMode(2, QHeaderView.Stretch)
         fh.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        fh.sectionResized.connect(lambda *_: self.findings.resizeRowsToContents())
         self.findings.itemDoubleClicked.connect(self._show_on_timeline)
         self.timeline = Timeline()
-        self.stats = QTextBrowser()
+        self.charts_page = QWidget()
+        self.charts_layout = QVBoxLayout(self.charts_page)
+        self.charts_layout.setContentsMargins(12, 12, 12, 12)
+        self.charts_layout.setSpacing(12)
+        self.charts_layout.addStretch()
+        scroll = QScrollArea(widgetResizable=True)
+        scroll.setWidget(self.charts_page)
         self.tabs.addTab(self.findings, "Findings")
         self.tabs.addTab(self.timeline, "Timeline")
-        self.tabs.addTab(self.stats, "Casts and buffs")
-        layout.addWidget(self.tabs)
+        self.tabs.addTab(scroll, "Casts and buffs")
+        layout.addWidget(self.tabs, 1)
         split.addWidget(right)
-        split.setSizes([460, 820])
-        self.setCentralWidget(split)
+        split.setSizes([480, 800])
+        body = QWidget()
+        outer = QVBoxLayout(body)
+        outer.setContentsMargins(12, 0, 12, 4)
+        outer.addWidget(split)
+        self.setCentralWidget(body)
 
     def _build_status(self) -> None:
-        self.progress = QProgressBar(maximumWidth=260, visible=False)
+        self.progress = QProgressBar(maximumWidth=260, visible=False, textVisible=False)
         self.statusBar().addPermanentWidget(self.progress)
 
     # Loading
@@ -256,12 +303,19 @@ class MainWindow(QMainWindow):
     # Display
 
     def _fill_tree(self) -> None:
+        t = theme.current()
+        current = self.tree.currentItem()
+        keep = current.data(0, Qt.UserRole) if current else None
         self.tree.clear()
         log = self.loaded
         overview = QTreeWidgetItem(["Overview of all fights", "", "", "", ""])
         overview.setData(0, Qt.UserRole, None)
+        font = overview.font(0)
+        font.setWeight(QFont.DemiBold)
+        overview.setFont(0, font)
         self.tree.addTopLevelItem(overview)
         parents = {}
+        select = overview
         for result in log.results:
             f = result.fight
             flags = sum(x.status == FLAG for x in result.findings)
@@ -270,6 +324,17 @@ class MainWindow(QMainWindow):
                        else "Depleted", None: "?"}[f.success]
             item = QTreeWidgetItem([f.label, outcome, fmt(f.duration), str(flags), str(warns)])
             item.setData(0, Qt.UserRole, result)
+            item.setForeground(1, t.status_color("ok") if f.success else t.color("muted"))
+            for col, count, status in ((3, flags, FLAG), (4, warns, WARN)):
+                item.setForeground(col, t.status_color(status) if count else t.color("muted"))
+                item.setTextAlignment(col, Qt.AlignCenter)
+                if count:
+                    bold = item.font(col)
+                    bold.setWeight(QFont.Bold)
+                    item.setFont(col, bold)
+            item.setForeground(2, t.color("text2"))
+            if result is keep:
+                select = item
             if f.kind == "mythic_plus":
                 parents[id(f)] = item
                 self.tree.addTopLevelItem(item)
@@ -280,7 +345,7 @@ class MainWindow(QMainWindow):
             else:
                 self.tree.addTopLevelItem(item)
         self.tree.expandAll()
-        self.tree.setCurrentItem(overview)
+        self.tree.setCurrentItem(select)
 
     def _fight_selected(self, item, _prev) -> None:
         if item is None or not self.loaded:
@@ -291,53 +356,85 @@ class MainWindow(QMainWindow):
         else:
             self._show_fight(result)
 
+    def _set_tiles(self, tiles: list[tuple[str, str, str | None]]) -> None:
+        for tile, spec in zip(self.tiles, tiles + [None] * len(self.tiles)):
+            tile.setVisible(spec is not None)
+            if spec:
+                tile.set(*spec)
+
     def _show_overview(self) -> None:
         log = self.loaded
-        self.heading.setText(f"<h2>{html.escape(log.player_name)}</h2>{len(log.results)} fights. "
-                             "Rules that came up most often across fights are listed first.")
+        t = theme.current()
+        results = log.results
+        self.heading.setText(log.player_name)
+        self.subheading.setText(f"{len(results)} fights. Rules that came up most often across fights are listed first.")
         counts: dict[str, list[int]] = {}
         titles = {}
-        for r in log.results:
+        for r in results:
             for f in r.findings:
                 titles[f.rule] = f"{f.rule} {f.title}"
                 c = counts.setdefault(f.rule, [0, 0])
                 c[0] += f.status == FLAG
                 c[1] += f.status == WARN
         rows = sorted((r for r in counts if sum(counts[r])), key=lambda r: (-counts[r][0], -counts[r][1]))
+        kills = sum(r.fight.success is True for r in results)
+        dps = [r.summary.dps for r in results if r.summary.duration > 0]
+        self._set_tiles([
+            (str(len(results)), f"fights · {kills} kills or timed", None),
+            (f"{max(dps):,.0f}" if dps else "–", "best DPS", None),
+            (str(sum(c[0] for c in counts.values())), "fixes across fights", t.status[FLAG]),
+            (str(sum(c[1] for c in counts.values())), "checks across fights", t.status[WARN]),
+        ])
         self.findings.setRowCount(0)
-        self.findings.setHorizontalHeaderLabels(["", "Rule", "Fights flagged / warned", ""])
+        self.findings.setHorizontalHeaderLabels(["Status", "Rule", "Fights flagged / warned", ""])
         for rule in rows:
             flags, warns = counts[rule]
             status = FLAG if flags else WARN
-            self._add_row(status, titles[rule], f"🔴 {flags}   🟡 {warns}", "", None)
+            self._add_row(status, titles[rule], f"Fix in {flags} · check in {warns}", "", None)
         self.timeline.set_result(None)
-        self.stats.setMarkdown(render_overview([(r.summary.label, r.findings) for r in log.results]))
+        self._set_charts([self._dps_chart(results), self._rules_chart(rows, counts, titles)])
+        self.tabs.setTabText(2, "Charts")
         self.tabs.setCurrentWidget(self.findings)
 
     def _show_fight(self, r: FightResult) -> None:
         s = r.summary
+        t = theme.current()
+        self.heading.setText(s.label)
         deaths = f" · died at {', '.join(fmt(d) for d in s.deaths)}" if s.deaths else ""
-        self.heading.setText(
-            f"<h2>{html.escape(s.label)}</h2><b>{html.escape(s.hero_tree)}</b> · {s.dps:,.0f} DPS · "
-            f"{s.cpm:.1f} abilities/min · {fmt(s.duration)}{deaths}<br>"
-            f"<span style='color:gray'>Findings {html.escape(r.bench_note)}. Double-click a row to see it on the timeline.</span>")
+        self.subheading.setText(f"<b>{html.escape(s.hero_tree)}</b>{deaths} · Findings {html.escape(r.bench_note)}. "
+                                "Double-click a row to see it on the timeline.")
+        flags = sum(f.status == FLAG for f in r.findings)
+        warns = sum(f.status == WARN for f in r.findings)
+        outcome = {True: "Kill" if r.fight.kind == "encounter" else "Timed", False: "Wipe" if r.fight.kind == "encounter"
+                   else "Depleted", None: "?"}[s.success]
+        self._set_tiles([
+            (f"{s.dps:,.0f}", "DPS", None),
+            (f"{s.cpm:.1f}", "abilities per minute", None),
+            (fmt(s.duration), outcome, t.status["ok"] if s.success else None),
+            (str(flags), "to fix", t.status[FLAG] if flags else None),
+            (str(warns), "to check", t.status[WARN] if warns else None),
+        ])
         self.findings.setRowCount(0)
-        self.findings.setHorizontalHeaderLabels(["", "Rule", "Result", "Look at"])
+        self.findings.setHorizontalHeaderLabels(["Status", "Rule", "Result", "Look at"])
         for f in r.findings:
-            when = ", ".join(fmt(t) for t in f.times[:8]) + (" …" if len(f.times) > 8 else "")
+            when = ", ".join(fmt(x) for x in f.times[:8]) + (" …" if len(f.times) > 8 else "")
             self._add_row(f.status, f"{f.rule} {f.title} ({f.severity})", f.detail, when, (r, f.times))
         self.timeline.set_result(r)
-        self.stats.setMarkdown(self._stats_markdown(r))
+        self._set_charts(self._fight_charts(r))
+        self.tabs.setTabText(2, "Casts and buffs")
 
     def _add_row(self, status: str, rule: str, detail: str, when: str, payload) -> None:
+        t = theme.current()
         row = self.findings.rowCount()
         self.findings.insertRow(row)
-        cells = [STATUS_TEXT[status], rule, detail, when]
-        for col, text in enumerate(cells):
+        for col, text in enumerate(["", rule, detail, when]):
             cell = QTableWidgetItem(text)
             cell.setData(Qt.UserRole, payload)
-            if status in STATUS_TINT:
-                cell.setBackground(STATUS_TINT[status])
+            cell.setData(STATUS_ROLE, status)
+            if status in (FLAG, WARN):
+                cell.setBackground(t.status_color(status, 22))
+            if col == 3:
+                cell.setForeground(t.color("text2"))
             self.findings.setItem(row, col, cell)
         self.findings.resizeRowToContents(row)
 
@@ -348,18 +445,66 @@ class MainWindow(QMainWindow):
             self.timeline.set_result(result, times)
             self.tabs.setCurrentWidget(self.timeline)
 
+    # Charts
+
+    def _set_charts(self, charts: list[BarChart]) -> None:
+        while self.charts_layout.count() > 1:
+            w = self.charts_layout.takeAt(0).widget()
+            if w:
+                w.setParent(None)
+                w.deleteLater()
+        for i, chart in enumerate(charts):
+            self.charts_layout.insertWidget(i, card(chart))
+
     @staticmethod
-    def _stats_markdown(r: FightResult) -> str:
+    def _fight_charts(r: FightResult) -> list[BarChart]:
         s = r.summary
-        lines = ["| Ability | Casts | Longest gap |", "|---|---|---|"]
+        damage = BarChart("Damage by ability")
+        damage.set_data([Bar(n, [(d, "accent")], f"{d / max(s.damage, 1):.0%}",
+                             f"{n}: {d:,.0f} damage ({d / max(s.damage, 1):.1%})")
+                         for n, d in s.damage_by_ability])
+        buffs = BarChart("Buff uptime")
+        buffs.set_data([Bar(n, [(u, "accent")], f"{u:.0%}") for n, u in s.buff_uptime.items()], max_value=1.0)
+        casts = BarChart("Pressed casts")
+        bars = []
         for name, count in s.casts.most_common():
             gap = s.longest_gap.get(name)
-            lines.append(f"| {name} | {count} | {fmt(gap) if gap is not None else ''} |")
-        lines += ["", "| Buff | Uptime |", "|---|---|"]
-        lines += [f"| {n} | {u:.0%} |" for n, u in s.buff_uptime.items()]
-        lines += ["", "| Damage | Share |", "|---|---|"]
-        lines += [f"| {n} | {d / max(s.damage, 1):.0%} |" for n, d in s.damage_by_ability]
-        return "\n".join(lines)
+            note = f"longest gap {fmt(gap)}" if gap is not None else ""
+            bars.append(Bar(name, [(count, "accent")], str(count), f"{name}: {count} casts" + (f", {note}" if note else ""),
+                            note))
+        casts.set_data(bars)
+        return [damage, buffs, casts]
+
+    @staticmethod
+    def _dps_chart(results: list[FightResult]) -> BarChart:
+        chart = BarChart("DPS per fight")
+        chart.set_data([Bar(r.summary.label, [(r.summary.dps, "accent")], f"{r.summary.dps:,.0f}",
+                            f"{r.summary.label}: {r.summary.dps:,.0f} DPS over {fmt(r.summary.duration)}")
+                        for r in results])
+        return chart
+
+    @staticmethod
+    def _rules_chart(rows: list[str], counts: dict[str, list[int]], titles: dict[str, str]) -> BarChart:
+        chart = BarChart("Rules that came up")
+        chart.set_data([Bar(titles[r], [(counts[r][0], f"status:{FLAG}"), (counts[r][1], f"status:{WARN}")],
+                            f"{counts[r][0]} / {counts[r][1]}",
+                            f"{titles[r]}: fix in {counts[r][0]} fights, check in {counts[r][1]}")
+                        for r in rows],
+                       [Series("Fix", f"status:{FLAG}"), Series("Check", f"status:{WARN}")])
+        return chart
+
+    # Theme
+
+    def set_theme(self, mode: str) -> None:
+        self.settings.setValue("theme", mode)
+        theme.apply(QApplication.instance(), mode)
+        self.refresh_theme()
+
+    def refresh_theme(self) -> None:
+        """Repaint the parts that bake theme colors into items."""
+        if self.loaded:
+            self._fill_tree()
+        self.timeline.update()
 
     def export_report(self) -> None:
         if not self.loaded:
@@ -374,7 +519,16 @@ class MainWindow(QMainWindow):
 def main() -> None:
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
+    if sys.platform == "win32":
+        app.setFont(QFont("Segoe UI", 10))
+    theme.apply(app, QSettings("HavocAnalyzer", "HavocAnalyzer").value("theme", "system"))
     win = MainWindow()
+
+    def follow_system(*_):
+        if win.settings.value("theme", "system") == "system":
+            win.set_theme("system")
+    if hasattr(app.styleHints(), "colorSchemeChanged"):
+        app.styleHints().colorSchemeChanged.connect(follow_system)
     win.show()
     if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
         win.load_log(sys.argv[1])

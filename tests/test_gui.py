@@ -4,7 +4,8 @@ import unittest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 try:
     from PySide6.QtWidgets import QApplication
-    from havoc_gui.app import MainWindow
+    from havoc_gui import theme
+    from havoc_gui.app import STATUS_ROLE, MainWindow
     from havoc_gui.workers import LoadedLog
 except ImportError:   # PySide6 or its system libraries missing: skip the GUI tests
     QApplication = None
@@ -31,7 +32,17 @@ class MainWindowTest(unittest.TestCase):
         win.tree.setCurrentItem(win.tree.topLevelItem(1))
         rules = [win.findings.item(r, 1).text() for r in range(win.findings.rowCount())]
         self.assertTrue(any(r.startswith("S2 ") for r in rules))
-        self.assertEqual(win.findings.item(0, 0).text(), "🔴")       # flags sort first
+        self.assertEqual(win.findings.item(0, 0).data(STATUS_ROLE), "flag")   # flags sort first
+        win.close()
+
+    def test_switches_theme(self):
+        win = MainWindow()
+        win.set_theme("dark")
+        self.assertIs(theme.current(), theme.DARK)
+        self.assertEqual(self.app.palette().window().color().name(), theme.DARK.window)
+        win.set_theme("light")
+        self.assertIs(theme.current(), theme.LIGHT)
+        win.settings.remove("theme")
         win.close()
 
 
