@@ -5,3 +5,6 @@ __pycache__/
 .env
 wcl/data/top_rankings.json
 wcl/data/labelled_sample.json
+build/
+dist/
+!requirements.txt

@@ -45,6 +45,33 @@ def to_event(raw: dict, start_ms: float, names: dict[int, str]) -> Event | None:
                  unit(raw.get("targetID")), spell, name, fury=fury, amount=amount)
 
 
+FIGHTS_QUERY = """query($c:String!){ reportData{ report(code:$c){ fights{
+  id encounterID name difficulty kill startTime endTime keystoneLevel } } } }"""
+
+
+def parse_report_url(text: str) -> tuple[str, int | None]:
+    """'https://www.warcraftlogs.com/reports/AbC123#fight=7&type=damage-done' -> ('AbC123', 7).
+
+    A bare report code is accepted too.
+    """
+    text = text.strip()
+    code = text.split("/reports/", 1)[1] if "/reports/" in text else text
+    code, _, fragment = code.partition("#")
+    code = code.split("?", 1)[0].strip("/")
+    fight = None
+    for part in fragment.split("&"):
+        key, _, value = part.partition("=")
+        if key == "fight" and value.isdigit():
+            fight = int(value)
+    return code, fight
+
+
+def list_fights(client, code: str) -> list[dict]:
+    """Boss pulls and Mythic+ keys in a report (trash segments left out)."""
+    fights = client.query(FIGHTS_QUERY, {"c": code})["reportData"]["report"]["fights"]
+    return [f for f in fights if f.get("encounterID") or f.get("keystoneLevel")]
+
+
 def load_fight(client, code: str, fight_id: int, player_name: str) -> tuple[Fight, str]:
     """Fetch one player's events for one fight. Returns (fight, player unit id)."""
     actors = client.query(ACTORS_QUERY, {"c": code})["reportData"]["report"]["masterData"]["actors"]
