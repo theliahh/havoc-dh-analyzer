@@ -64,8 +64,24 @@ class FightData:
         return self.fight.duration
 
     @property
+    def dead_intervals(self) -> list[tuple[float, float]]:
+        """(death, back in action) for each death: until the next cast after a battle
+        rez, or the end of the fight."""
+        out = []
+        for t in self.deaths:
+            back = next((e.t for e in self.own_events
+                         if e.type == ev.CAST and e.src == self.player and e.t > t), self.duration)
+            out.append((t, back))
+        return out
+
+    @property
+    def alive_seconds(self) -> float:
+        return max(self.duration - sum(b - a for a, b in self.dead_intervals), 0.0)
+
+    @property
     def minutes(self) -> float:
-        return self.fight.duration / 60 if self.fight.duration else 1.0
+        """Minutes alive, so rates aren't diluted by time spent dead."""
+        return self.alive_seconds / 60 if self.alive_seconds else 1.0
 
     def count(self, *names: str) -> int:
         return sum(len(self.casts.get(n, [])) for n in names)
@@ -105,7 +121,9 @@ class FightData:
             times = sorted(e.t for e in self.own_events if e.type == ev.CAST and e.src == self.player)
         else:
             times = sorted(e.t for cs in self.casts.values() for e in cs)
-        return [(a, b - a) for a, b in zip(times, times[1:]) if b - a > threshold]
+        dead = self.dead_intervals
+        return [(a, b - a) for a, b in zip(times, times[1:])
+                if b - a > threshold and not any(a <= d < b for d, _ in dead)]
 
     def idle(self, threshold: float = 2.5, all_casts: bool = False) -> tuple[int, float]:
         """(number of gaps, seconds lost beyond a 1.5 s GCD)."""
