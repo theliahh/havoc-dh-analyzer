@@ -3,9 +3,9 @@ import unittest
 from havoc_analyzer import events as ev
 from havoc_analyzer.benchmarks import Benchmark
 from havoc_analyzer.events import Event, Fight
-from havoc_analyzer.rules import FLAG, INFO, OK, evaluate
+from havoc_analyzer.rules import FLAG, INFO, OK, WARN, evaluate
 from havoc_analyzer.summary import build
-from havoc_analyzer.wcl_source import parse_report_url, to_event
+from havoc_analyzer.wcl_source import load_fight, parse_report_url, to_event
 
 ME, BOSS = "me", "boss"
 
@@ -67,6 +67,21 @@ class RuleTest(unittest.TestCase):
         self.assertEqual(findings(beams[:2], bench)["S1"].status, FLAG)  # 2/min = 67%
         self.assertEqual(findings(beams)["S1"].status, INFO)            # no benchmark
 
+    def test_rate_uses_pressed_benchmark(self):
+        # Two "The Hunt" spell IDs share a name; only the pressed one (370965) counts.
+        bench = Benchmark("raid", "AR", 8, cpm={"The Hunt": 2.0}, pressed_cpm={"The Hunt": 1.0})
+        hunts = [cast(0, 370965, "The Hunt"), cast(0.3, 370966, "The Hunt")]
+        f = findings(hunts, bench)["S5"]
+        self.assertEqual(f.status, OK)
+        self.assertIn("1.00/min vs 1.00/min", f.detail)
+
+    def test_thrill_uptime_against_benchmark(self):
+        events = [cast(1, 442294, "Reaver's Glaive"),
+                  buff(0, ev.AURA_APPLIED, 442695, "Thrill of the Fight"),
+                  buff(42, ev.AURA_REMOVED, 442695, "Thrill of the Fight")]        # 70% up
+        self.assertEqual(findings(events, Benchmark("mplus", "AR", 8, thrill_uptime=0.70))["AR4"].status, OK)
+        self.assertEqual(findings(events)["AR4"].status, WARN)                       # default 80% target
+
     def test_hero_tree_rules_only_for_that_tree(self):
         ar = findings([cast(1, 442294, "Reaver's Glaive"), buff(3, ev.AURA_APPLIED, 442695, "Thrill of the Fight")])
         self.assertIn("AR2", ar)
@@ -98,6 +113,26 @@ class WclAdapterTest(unittest.TestCase):
     def test_unknown_type_and_other_resource_dropped(self):
         self.assertIsNone(to_event({"timestamp": 0, "type": "begincast"}, 0, {}))
         self.assertIsNone(to_event({"timestamp": 0, "type": "resourcechange", "resourceChangeType": 0}, 0, {}))
+
+    def test_keystone_fight_is_a_key(self):
+        # WCL reports a whole key as one fight whose encounterID is the dungeon's.
+        class FakeClient:
+            def query(self, q, v):
+                return {"reportData": {"report": {"masterData": {"actors": [{"id": 7, "name": "Me"}]}}}}
+
+            def fight(self, code, fid):
+                return {"id": 15, "encounterID": 12993, "name": "Altar of Fangs", "difficulty": 10, "kill": True,
+                        "startTime": 0, "endTime": 60000, "keystoneLevel": 23}
+
+            def abilities(self, code):
+                return {}
+
+            def events(self, *a, **k):
+                return iter(())
+
+        fight, player = load_fight(FakeClient(), "x", 15, "Me")
+        self.assertEqual((fight.kind, fight.content, fight.label, player),
+                         ("mythic_plus", "mplus", "Altar of Fangs +23", "wcl:7"))
 
 
 if __name__ == "__main__":

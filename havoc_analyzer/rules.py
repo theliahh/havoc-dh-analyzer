@@ -60,20 +60,22 @@ def fmt(t: float) -> str:
     return f"{int(t // 60)}:{int(t % 60):02d}"
 
 
-def _rate_check(names: list[str], label: str, verified: bool = True):
-    """Compare casts per minute (by spell name) with the top-player median.
+def _rate_check(names: list[str], label: str):
+    """Compare pressed casts per minute with the top-player median.
 
-    verified=False reports both numbers as info only, for benchmarks still being checked.
+    Uses the pressed-cast benchmark (same counting as summary.build); falls back
+    to counting by spell name for a benchmarks file that predates it.
     """
     def check(d: FightData, b: Benchmark | None):
-        yours = sum(d.name_per_min(n) for n in names)
-        top = sum(b.cpm.get(n, 0.0) for n in names) if b else 0.0
+        if b and b.pressed_cpm:
+            yours = d.per_min(*names)
+            top = sum(b.pressed_cpm.get(n, 0.0) for n in names)
+        else:
+            yours = sum(d.name_per_min(n) for n in names)
+            top = sum(b.cpm.get(n, 0.0) for n in names) if b else 0.0
         if not top:
             return INFO, f"{label}: {yours:.2f}/min (no top-player benchmark).", []
         ratio = yours / top
-        if not verified:
-            return INFO, (f"{label}: {yours:.2f}/min vs {top:.2f}/min for top players ({ratio:.0%}). "
-                          "Benchmark not yet verified, so not judged."), []
         status = OK if ratio >= OK_RATIO else WARN if ratio >= WARN_RATIO else FLAG
         return status, f"{label}: {yours:.2f}/min vs {top:.2f}/min for top players ({ratio:.0%}).", []
     return check
@@ -125,11 +127,13 @@ def _fury_at(name: str, low: int, bench_attr: str):
 
 def _idle(d: FightData, b: Benchmark | None):
     """S11: dead time between pressed abilities."""
-    gap_list = d.idle_gaps(all_casts=True)   # same method as the benchmark
+    # Measure the same way as the benchmark: pressed casts when it has that number.
+    pressed = bool(b and b.idle_pressed_per_min is not None)
+    gap_list = d.idle_gaps(all_casts=not pressed)
     gaps, seconds = len(gap_list), sum(g - 1.5 for _, g in gap_list)
     longest = [a for a, _ in sorted(gap_list, key=lambda x: -x[1])[:6]]
     yours = seconds / d.minutes
-    top = b.idle_per_min if b else None
+    top = (b.idle_pressed_per_min if pressed else b.idle_per_min) if b else None
     text = f"{seconds:.0f} s idle over {gaps} gaps ({yours:.1f} s/min)"
     if top is None:
         return INFO, text + ". Forced downtime is not excluded yet.", sorted(longest)
@@ -170,10 +174,12 @@ def _thrill_per_glaive(d: FightData, b):
 
 
 def _thrill_uptime(d: FightData, b):
-    """AR4: Thrill of the Fight uptime."""
+    """AR4: Thrill of the Fight uptime, against top players when the benchmark has it."""
     up = d.uptime(442695)
-    status = OK if up >= 0.8 else WARN if up >= 0.65 else FLAG
-    return status, f"Thrill of the Fight up {up:.0%} of the fight.", []
+    top = b.thrill_uptime if b and b.thrill_uptime is not None else 0.8
+    status = OK if up >= top - 0.05 else WARN if up >= top - 0.15 else FLAG
+    source = "top players" if b and b.thrill_uptime is not None else "the default target"
+    return status, f"Thrill of the Fight up {up:.0%} of the fight vs {top:.0%} for {source}.", []
 
 
 def _fs_meta_spenders(d: FightData, b):
@@ -236,7 +242,7 @@ RULES = [
          _fury_at("Essence Break", LOW_FURY_EB, "fury_at_essence_break")),
     Rule("S11", "Avoid dead time", "High", BOTH, _idle),
     Rule("S13", "Potion with burst", "Med", BOTH, _potion_with_meta),
-    Rule("AR1", "Reaver's Glaive on time", "High", AR, _rate_check(["Reaver's Glaive"], "Reaver's Glaive", verified=False)),
+    Rule("AR1", "Reaver's Glaive on time", "High", AR, _rate_check(["Reaver's Glaive"], "Reaver's Glaive")),
     Rule("AR2", "Both empowered spenders after each Glaive", "High", AR, _thrill_per_glaive),
     Rule("AR4", "Thrill of the Fight uptime", "Med", AR, _thrill_uptime),
     Rule("AR5", "Opener", "Low", AR, _opener),

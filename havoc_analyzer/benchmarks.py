@@ -19,6 +19,11 @@ class Benchmark:
     fury_at_meta: float | None = None
     fury_at_essence_break: float | None = None
     idle_per_min: float | None = None
+    # Added with the shared-model benchmarks (wcl/benchmarks.py); None when the file predates them.
+    pressed_cpm: dict[str, float] = field(default_factory=dict)   # pressed casts only, by ability
+    idle_pressed_per_min: float | None = None                     # gaps between pressed casts only
+    reavers_glaive_cast_per_min: float | None = None              # spell 442294 only
+    thrill_uptime: float | None = None
 
 
 def _median(values):
@@ -47,6 +52,12 @@ def load(path: str = DEFAULT_PATH) -> dict[tuple[str, str], Benchmark]:
             fury_at_essence_break=_median(r.get("fury_at_essence_break") for r in rs),
             idle_per_min=_median(r["idle_seconds_rough"] / r["minutes"] for r in rs
                                  if r.get("idle_seconds_rough") is not None and r.get("minutes")),
+            pressed_cpm={a: statistics.median(r.get("pressed_cpm", {}).get(a, 0.0) for r in rs)
+                         for a in {a for r in rs for a in r.get("pressed_cpm", {})}},
+            idle_pressed_per_min=_median(r["idle_pressed_seconds"] / r["minutes"] for r in rs
+                                         if r.get("idle_pressed_seconds") is not None and r.get("minutes")),
+            reavers_glaive_cast_per_min=_median(r.get("reavers_glaive_442294_pm") for r in rs),
+            thrill_uptime=_median(r.get("thrill_uptime") for r in rs),
         )
     return out
 
