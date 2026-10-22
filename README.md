@@ -21,13 +21,19 @@ Finds mistakes and improvements in Havoc Demon Hunter play from World of Warcraf
 
 ![Findings for one pull](docs/images/app-findings.png)
 
+![The same pull in dark mode](docs/images/app-findings-dark.png)
+
 - **Open log…** reads a `WoWCombatLog*.txt` (about 8 s for a 600 MB raid night).
 - **Watch Logs folder** loads the newest log and reloads it about 20 s after each pull ends.
 - **From Warcraft Logs…** loads a report link (add `#fight=N` for one pull). It needs your WCL v2 client ID and secret, which are saved only in your user settings on this computer.
 - Pick a pull or key on the left to see its findings. Double-click a finding to see it on the **Timeline**, which shows the key cooldowns with pressed Metamorphosis and Demonic windows shaded.
+- **Casts and buffs** charts damage by ability, buff uptime and pressed casts for the pull; on the overview it charts DPS per fight and the rules that came up most.
 - **Export report…** saves the Markdown report.
+- **Theme** switches between light, dark, or matching Windows (the default). The choice is remembered.
 
 ![Timeline](docs/images/app-timeline.png)
+
+![Timeline in dark mode](docs/images/app-timeline-dark.png)
 
 **Windows download:** every push builds `HavocAnalyzer.exe`. Open the repo's Actions tab, pick the latest **build-app** run, and download the `HavocAnalyzer-windows` artifact.
 
