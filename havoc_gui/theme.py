@@ -166,6 +166,7 @@ def _stylesheet(t: Theme) -> str:
     QMenu {{ background: {t.surface}; color: {t.text}; border: 1px solid {t.border}; border-radius: 8px; padding: 4px; }}
     QMenu::item {{ padding: 6px 18px; border-radius: 5px; }}
     QMenu::item:selected {{ background: {t.surface_alt}; }}
+    QFrame#divider {{ background: {t.border}; border: none; max-height: 1px; }}
     QLabel#muted {{ color: {t.muted}; }}
     QLabel#secondary {{ color: {t.text2}; }}
     QLabel#title {{ font-size: 17pt; font-weight: 700; }}

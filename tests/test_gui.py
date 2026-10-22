@@ -3,9 +3,10 @@ import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 try:
-    from PySide6.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication, QLabel
     from havoc_gui import theme
     from havoc_gui.app import STATUS_ROLE, MainWindow
+    from havoc_gui.rules_tab import RulesPage
     from havoc_gui.workers import LoadedLog
 except ImportError:   # PySide6 or its system libraries missing: skip the GUI tests
     QApplication = None
@@ -34,6 +35,18 @@ class MainWindowTest(unittest.TestCase):
         self.assertTrue(any(r.startswith("S2 ") for r in rules))
         self.assertEqual(win.findings.item(0, 0).data(STATUS_ROLE), "flag")   # flags sort first
         win.close()
+
+    def test_rules_tab_follows_tree(self):
+        page = RulesPage()
+        page.set_detected("Fel-Scarred")
+        self.assertEqual(page.tree, "Fel-Scarred")
+        own = page.sections[1].findChildren(QLabel)
+        self.assertTrue(any("FS3" in w.text() for w in own))
+        self.assertFalse(any("AR1" in w.text() for w in own))
+        page.set_detected("Unknown")                                    # stays on the last tree
+        self.assertEqual(page.tree, "Fel-Scarred")
+        page.picker.setCurrentText("Aldrachi Reaver")
+        self.assertTrue(any("AR1" in w.text() for w in page.sections[1].findChildren(QLabel)))
 
     def test_switches_theme(self):
         win = MainWindow()
