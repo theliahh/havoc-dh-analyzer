@@ -5,7 +5,7 @@ from havoc_analyzer.benchmarks import Benchmark
 from havoc_analyzer.events import Event, Fight
 from havoc_analyzer.rules import FLAG, INFO, OK, evaluate
 from havoc_analyzer.summary import build
-from havoc_analyzer.wcl_source import to_event
+from havoc_analyzer.wcl_source import load_fight, to_event
 
 ME, BOSS = "me", "boss"
 
@@ -92,6 +92,26 @@ class WclAdapterTest(unittest.TestCase):
     def test_unknown_type_and_other_resource_dropped(self):
         self.assertIsNone(to_event({"timestamp": 0, "type": "begincast"}, 0, {}))
         self.assertIsNone(to_event({"timestamp": 0, "type": "resourcechange", "resourceChangeType": 0}, 0, {}))
+
+    def test_keystone_fight_is_a_key(self):
+        # WCL reports a whole key as one fight whose encounterID is the dungeon's.
+        class FakeClient:
+            def query(self, q, v):
+                return {"reportData": {"report": {"masterData": {"actors": [{"id": 7, "name": "Me"}]}}}}
+
+            def fight(self, code, fid):
+                return {"id": 15, "encounterID": 12993, "name": "Altar of Fangs", "difficulty": 10, "kill": True,
+                        "startTime": 0, "endTime": 60000, "keystoneLevel": 23}
+
+            def abilities(self, code):
+                return {}
+
+            def events(self, *a, **k):
+                return iter(())
+
+        fight, player = load_fight(FakeClient(), "x", 15, "Me")
+        self.assertEqual((fight.kind, fight.content, fight.label, player),
+                         ("mythic_plus", "mplus", "Altar of Fangs +23", "wcl:7"))
 
 
 if __name__ == "__main__":
