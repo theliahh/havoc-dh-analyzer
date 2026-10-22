@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.txt
+*.7z
+.env
+wcl/data/top_rankings.json
+wcl/data/labelled_sample.json
