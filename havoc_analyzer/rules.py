@@ -297,7 +297,7 @@ NOT_CHECKED = [
     Rule("S12", "Fel Rush only as filler", "Low", BOTH, None,
          "Use Fel Rush only when nothing else is ready or to get back to the target."),
     Rule("AR3", "Right spender order after a Glaive", "Med", AR, None,
-         "On one target, alternate Blade Dance and Chaos Strike to build Reaver's Mark to 3 stacks, and use "
+         "On one target, use Blade Dance then Chaos Strike to build Reaver's Mark to 3 stacks, and use "
          "Chaos Strike first once you have 2 or more. With 2 or more targets, always Chaos Strike first."),
     Rule("FS1", "Immolation Aura before Metamorphosis", "Med", FS, None,
          "Spend your Immolation Aura charges before you press Metamorphosis."),
