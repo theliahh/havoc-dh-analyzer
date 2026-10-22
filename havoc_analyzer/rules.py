@@ -25,6 +25,7 @@ OK_RATIO, WARN_RATIO = 0.9, 0.75
 LOW_FURY_META, LOW_FURY_EB = 90, 80
 EYE_BEAM_BEFORE_META_S = 10.0
 OPENER_WINDOW_S = 20.0
+PREPOT_S = 10.0          # a potion this long before Metamorphosis still covers the window
 
 AR, FS, BOTH = "Aldrachi Reaver", "Fel-Scarred", None
 
@@ -143,13 +144,13 @@ def _idle(d: FightData, b: Benchmark | None):
 
 
 def _potion_with_meta(d: FightData, b):
-    """S13: potion in the opener or inside a real Metamorphosis."""
+    """S13: potion in the opener, or inside or just before a real Metamorphosis (pre-potting)."""
     potions = [e.t for e in d.own_events if e.type == "cast" and e.src == d.player and "Potion of" in e.spell_name
                and "Health" not in e.spell_name]
     if not potions:
         return INFO, "No damage potion used.", []
     real = [w for w in d.meta_windows if w.from_cast]
-    bad = [t for t in potions if t > OPENER_WINDOW_S and not any(w.start - 3 <= t <= w.end for w in real)]
+    bad = [t for t in potions if t > OPENER_WINDOW_S and not any(w.start - PREPOT_S <= t <= w.end for w in real)]
     if not bad:
         return OK, f"{len(potions)} damage potion(s), all in the opener or a Metamorphosis.", []
     return WARN, f"{len(bad)} damage potion(s) used outside the opener and Metamorphosis.", bad

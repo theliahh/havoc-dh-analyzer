@@ -96,6 +96,31 @@ class RuleTest(unittest.TestCase):
         self.assertEqual(f["S11"].times, [20])
 
 
+class DeathTest(unittest.TestCase):
+    def test_time_dead_not_counted(self):
+        # Two Eye Beams in 30 s alive, then dead for the last 30 s: 4/min, not 2/min.
+        events = [cast(0, 198013, "Eye Beam"), cast(15, 198013, "Eye Beam"),
+                  Event(30, ev.DIED, "", ME)]
+        data = build(fight(events), ME)
+        self.assertEqual(data.dead_intervals, [(30, 60.0)])
+        self.assertAlmostEqual(data.per_min("Eye Beam"), 4.0)
+
+    def test_battle_rez_ends_dead_time_and_gap_is_not_idle(self):
+        events = [cast(t, 162794, "Chaos Strike") for t in range(0, 20)]
+        events += [Event(20, ev.DIED, "", ME)] + [cast(t, 162794, "Chaos Strike") for t in range(40, 60)]
+        data = build(fight(events), ME)
+        self.assertEqual(data.dead_intervals, [(20, 40)])
+        self.assertEqual(data.idle_gaps(), [])
+
+
+class PotionTest(unittest.TestCase):
+    def test_prepot_before_meta_is_fine(self):
+        events = [cast(52, 1236994, "Potion of Recklessness"), cast(55, 198013, "Eye Beam"),
+                  cast(58, 200166, "Metamorphosis"), buff(58.2, ev.AURA_APPLIED, 162264, "Metamorphosis"),
+                  buff(78, ev.AURA_REMOVED, 162264, "Metamorphosis")]
+        self.assertEqual(findings(events, duration=90)["S13"].status, OK)
+
+
 class WclAdapterTest(unittest.TestCase):
     def test_cast_with_fury(self):
         raw = {"timestamp": 12500, "type": "cast", "sourceID": 7, "targetID": 99, "abilityGameID": 200166,
