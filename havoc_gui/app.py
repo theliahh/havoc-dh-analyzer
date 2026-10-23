@@ -23,7 +23,7 @@ from . import theme
 from .charts import Bar, BarChart, Series, StatTile, StatusDelegate, card
 from .rules_tab import RulesPage
 from .timeline import Timeline
-from .workers import LoadedLog, LogWorker, WclWorker
+from .workers import NO_HAVOC, LoadedLog, LogWorker, WclWorker
 
 APP_NAME = "Havoc Analyzer"
 STATUS_ROLE = Qt.UserRole + 1
@@ -71,6 +71,7 @@ class MainWindow(QMainWindow):
         self.loaded: LoadedLog | None = None
         self.thread: QThread | None = None
         self.worker = None
+        self.quiet_load = False             # set while a watched log loads: no pop-up if it has no Havoc yet
         self.watch_folder: str | None = None
         self.watcher = QFileSystemWatcher(self)
         self.watcher.directoryChanged.connect(self._log_changed)
@@ -202,8 +203,8 @@ class MainWindow(QMainWindow):
             self.settings.setValue("last_dir", os.path.dirname(path))
             self.load_log(path)
 
-    def load_log(self, path: str, player_guid: str | None = None) -> None:
-        self._start(LogWorker(path, player_guid or self.settings.value("player_guid")), os.path.basename(path))
+    def load_log(self, path: str, player_guid: str | None = None, quiet: bool = False) -> None:
+        self._start(LogWorker(path, player_guid or self.settings.value("player_guid")), os.path.basename(path), quiet)
 
     def open_wcl(self) -> None:
         dlg = WclDialog(self.settings, self)
@@ -219,10 +220,11 @@ class MainWindow(QMainWindow):
         self.settings.setValue("wcl/client_secret", secret)
         self._start(WclWorker(url, player, cid, secret), "Warcraft Logs report")
 
-    def _start(self, worker, label: str) -> None:
+    def _start(self, worker, label: str, quiet: bool = False) -> None:
         if self.thread is not None:
             self.statusBar().showMessage("Still loading the previous log…", 4000)
             return
+        self.quiet_load = quiet
         self.thread = QThread(self)
         self.worker = worker
         worker.moveToThread(self.thread)
@@ -249,6 +251,10 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(msg)
 
     def _failed(self, msg: str) -> None:
+        if self.quiet_load and msg == NO_HAVOC:
+            # Entering an instance starts a log before any Havoc combat: keep watching without a pop-up.
+            self.statusBar().showMessage(f"Watching {self.watch_folder}. No Havoc Demon Hunter in the log yet.")
+            return
         self.statusBar().clearMessage()
         QMessageBox.warning(self, APP_NAME, msg)
 
@@ -289,7 +295,7 @@ class MainWindow(QMainWindow):
         latest = newest_log(folder)
         if latest:
             self.watcher.addPath(latest)
-            self.load_log(latest)
+            self.load_log(latest, quiet=True)
         self.statusBar().showMessage(f"Watching {folder}. New pulls load about 20 s after the log goes quiet.", 8000)
 
     def _log_changed(self, _path: str) -> None:
@@ -302,7 +308,7 @@ class MainWindow(QMainWindow):
             return
         if latest not in self.watcher.files():
             self.watcher.addPath(latest)
-        self.load_log(latest)
+        self.load_log(latest, quiet=True)
 
     # Display
 
